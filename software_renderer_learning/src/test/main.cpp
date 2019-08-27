@@ -115,6 +115,7 @@ int main(int argc, char* args[])
 					quit = true;
 			}
 
+
 			//MY RENDERING
 			//std::cout << angle << std::endl;
 			for (int i = 0; i < meshes.size(); i++)
