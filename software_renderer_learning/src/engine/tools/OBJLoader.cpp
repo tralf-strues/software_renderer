@@ -32,7 +32,6 @@ Mesh loadOBJ(string meshName, string fileName)
 		return Mesh("FAILED", 0, 0);
 	}
 
-	cout << "Opened input file.\n";
 	vector<vec3> vertices;
 	vector<vec2> textures;
 	vector<vec3> normals;
@@ -85,6 +84,15 @@ Mesh loadOBJ(string meshName, string fileName)
 	mesh.textures = textures;
 	mesh.normals = normals;
 	mesh.faces = faces;
+
+	cout << "Opened input file (" << 
+		fileName << 
+		": " << 
+		mesh.faces.size() << 
+		" faces, " << 
+		mesh.vertices.size() <<
+		" vertices)" <<
+		endl;
 
 	return mesh;
 }

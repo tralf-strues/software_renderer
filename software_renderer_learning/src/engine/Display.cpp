@@ -44,7 +44,7 @@ SDL_Surface* Display::getSurface()
 	return surface;
 }
 
-void Display::render(Camera camera, std::vector<Mesh> meshes,
+void Display::render(Camera& camera, std::vector<Mesh>& meshes,
 					 bool isPerspective, bool isWireframe)
 {
 	clear(vec4(0, 0, 0, 1));
@@ -108,13 +108,16 @@ void Display::clear(vec4 color)
 {
 	SDL_FillRect(surface, 0, 0);
 
-	for (int y = 0; y < height; y++)
+	// todo: set to 1.1 because z is in range [-1; 1]
+	std::fill(depthBuffer.begin(), depthBuffer.end(), 100); 
+	
+	/*for (int y = 0; y < height; y++)
 	{
 		for (int x = 0; x < width; x++)
 		{
-			depthBuffer[y * width + x] = 100; // todo: set to 1.1 because z is in range [-1; 1]
+			depthBuffer[y * width + x] = 100; 
 		}
-	}
+	}*/
 }
 
 vec3 Display::project(vec3 coordinates, mat4 transformationMatrix)
@@ -131,8 +134,15 @@ void Display::drawPoint(vec2 coordinates, vec4 color)
 		coordinates.x >= width ||
 		coordinates.y >= height)
 	{
-
 		return;
+	}
+
+	/* Lock the screen for direct access to the pixels */
+	if (SDL_MUSTLOCK(surface)) {
+		if (SDL_LockSurface(surface) < 0) {
+			fprintf(stderr, "Can't lock screen: %s\n", SDL_GetError());
+			return;
+		}
 	}
 
 	Uint32* target_pixel;
@@ -140,6 +150,10 @@ void Display::drawPoint(vec2 coordinates, vec4 color)
 		(int)coordinates.y * surfacePitch +
 							  (int)coordinates.x * sizeof(*target_pixel));
 	*target_pixel = SDL_MapRGB(surfacePixelFormat, color.x, color.y, color.z);
+
+	if (SDL_MUSTLOCK(surface)) {
+		SDL_UnlockSurface(surface);
+	}
 }
 
 void Display::drawLine(vec2 p0, vec2 p1, vec4 color)

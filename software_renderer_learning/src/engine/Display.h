@@ -26,7 +26,7 @@ public:
 	int getHeight();
 	SDL_Surface* getSurface();
 
-	void render(Camera camera, std::vector<Mesh> meshes,
+	void render(Camera& camera, std::vector<Mesh>& meshes,
 				   bool isPerspective, bool isWireframe);
 private:
 	void clear(vec4 color);

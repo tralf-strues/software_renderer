@@ -6,9 +6,9 @@
 #include "../engine/math/engineMath.h"
 #include "../engine/tools/OBJLoader.h"
 
-#define FPS_LIMIT -1 
-#define WIDTH 640
-#define HEIGHT 480
+#define FPS_LIMIT 75
+#define WIDTH 1280 // 640, 1280
+#define HEIGHT 720 // 480, 720
 
 bool init();
 void close();
@@ -36,11 +36,11 @@ bool init()
 		}
 
 		//Create window
-		gWindow = SDL_CreateWindow("SDL Tutorial", 
-								   SDL_WINDOWPOS_UNDEFINED, 
-								   SDL_WINDOWPOS_UNDEFINED, 
-								   WIDTH, 
-								   HEIGHT, 
+		gWindow = SDL_CreateWindow("Software renderer",
+								   SDL_WINDOWPOS_UNDEFINED,
+								   SDL_WINDOWPOS_UNDEFINED,
+								   WIDTH,
+								   HEIGHT,
 								   SDL_WINDOW_SHOWN);
 		if (gWindow == NULL)
 		{
@@ -49,6 +49,7 @@ bool init()
 		}
 		else
 		{
+			SDL_GL_SetSwapInterval(0); // disable vsync
 			//Display
 			display = Display(gWindow, WIDTH, HEIGHT);
 		}
@@ -124,29 +125,22 @@ int main(int argc, char* args[])
 			}
 			angle = (angle + 1) % 360;
 
-			/* Lock the screen for direct access to the pixels */
-			if (SDL_MUSTLOCK(display.getSurface())) {
-				if (SDL_LockSurface(display.getSurface()) < 0) {
-					fprintf(stderr, "Can't lock screen: %s\n", SDL_GetError());
-					return 0;
-				}
-			}
-
 			display.render(camera, meshes, true, false);
-
-			if (SDL_MUSTLOCK(display.getSurface())) {
-				SDL_UnlockSurface(display.getSurface());
-			}
 
 			SDL_UpdateWindowSurface(gWindow);
 
 			frameTime = SDL_GetTicks() - frameStart;
 			if (FPS_LIMIT > 0 && 1000 / frameTime > FPS_LIMIT)
 			{
-				SDL_Delay(1000 / FPS_LIMIT  - frameTime);
+				SDL_Delay(1000 / FPS_LIMIT - frameTime);
+				SDL_SetWindowTitle(gWindow, ("Software renderer [FPS: " + std::to_string(FPS_LIMIT) + "]").c_str());
+			}
+			else
+			{
+				SDL_SetWindowTitle(gWindow, ("Software renderer [FPS: " + std::to_string(1000 / frameTime) + "]").c_str());
 			}
 
-			std::cout << "FPS: " << 1000 / frameTime << std::endl;
+			//std::cout << "FPS: " << 1000 / frameTime << std::endl;
 		}
 	}
 	close();
