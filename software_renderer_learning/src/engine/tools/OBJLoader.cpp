@@ -85,9 +85,9 @@ Mesh loadOBJ(string meshName, string fileName)
 	mesh.normals = normals;
 	mesh.faces = faces;
 
-	cout << "Opened input file (" << 
+	cout << "Processed input file (\"" << 
 		fileName << 
-		": " << 
+		"\": " << 
 		mesh.faces.size() << 
 		" faces, " << 
 		mesh.vertices.size() <<

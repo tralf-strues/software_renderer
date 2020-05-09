@@ -60,6 +60,13 @@ void vec4::setCoordinate(const int i, const float coordinate)
 	}
 }
 
+vec3 vec4::toVec3(const vec4 vector)
+{
+	return vec3(vector.x / vector.w,
+				vector.y / vector.w,
+				vector.z / vector.w);
+}
+
 vec4 vec4::homogeneous(const vec3 vector)
 {
 	vec4 newVector(vector.x, vector.y, vector.z, 1);
@@ -80,7 +87,7 @@ vec4 vec4::normalize(const vec4 vector)
 	return newVector;
 }
 
-float vec4::dotProduct(const vec4 left, const vec4 right)
+float vec4::dot(const vec4 left, const vec4 right)
 {
 	float product = 0;
 	product += left.x * right.x;
@@ -131,6 +138,16 @@ vec4& vec4::div(const vec4& other)
 	return *this;
 }
 
+vec4& vec4::mult(const float& multiplier)
+{
+	x *= multiplier;
+	y *= multiplier;
+	z *= multiplier;
+	w *= multiplier;
+
+	return *this;
+}
+
 vec4 operator+(vec4 left, const vec4& right)
 {
 	return left.add(right);
@@ -151,6 +168,11 @@ vec4 operator/(vec4 left, const vec4& right)
 	return left.div(right);
 }
 
+vec4 operator*(vec4 left, const float& multiplier)
+{
+	return left.mult(multiplier);
+}
+
 vec4& vec4::operator+=(const vec4& other)
 {
 	return add(other);
@@ -169,6 +191,11 @@ vec4& vec4::operator*=(const vec4& other)
 vec4& vec4::operator/=(const vec4& other)
 {
 	return div(other);
+}
+
+vec4& vec4::operator*=(const float& multiplier)
+{
+	return mult(multiplier);
 }
 
 std::ostream& operator<<(std::ostream& stream, const vec4& vector)

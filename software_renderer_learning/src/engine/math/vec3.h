@@ -12,23 +12,29 @@ struct vec3
 	void setCoordinate(const int i, const float coordinate);
 
 	static vec3 normalize(const vec3 vector);
-	static float dotProduct(const vec3 left, const vec3 right);
-	static vec3 crossProduct(const vec3 left, const vec3 right);
+	static float dot(const vec3 left, const vec3 right);
+	static vec3 cross(const vec3 left, const vec3 right);
 
 	vec3& add(const vec3& other);
 	vec3& sub(const vec3& other);
 	vec3& mult(const vec3& other);
 	vec3& div(const vec3& other);
 
+	vec3& mult(const float& multiplier);
+
 	friend vec3 operator+(vec3 left, const vec3& right);
 	friend vec3 operator-(vec3 left, const vec3& right);
 	friend vec3 operator*(vec3 left, const vec3& right);
 	friend vec3 operator/(vec3 left, const vec3& right);
 
+	friend vec3 operator*(vec3 left, const float& multiplier);
+
 	vec3& operator+=(const vec3& other);
 	vec3& operator-=(const vec3& other);
 	vec3& operator*=(const vec3& other);
 	vec3& operator/=(const vec3& other);
+
+	vec3& operator*=(const float& multiplier);
 
 	friend std::ostream& operator<<(std::ostream& stream, const vec3& vector);
 };

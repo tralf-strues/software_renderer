@@ -13,23 +13,30 @@ struct vec4
 	void setCoordinate(const int i, const float coordinate);
 
 	static vec4 homogeneous(const vec3 vector);
+	static vec3 toVec3(const vec4 vector);
 	static vec4 normalize(const vec4 vector);
-	static float dotProduct(const vec4 left, const vec4 right);
+	static float dot(const vec4 left, const vec4 right);
 
 	vec4& add(const vec4& other);
 	vec4& sub(const vec4& other);
 	vec4& mult(const vec4& other);
 	vec4& div(const vec4& other);
 
+	vec4& mult(const float& multiplier);
+
 	friend vec4 operator+(vec4 left, const vec4& right);
 	friend vec4 operator-(vec4 left, const vec4& right);
 	friend vec4 operator*(vec4 left, const vec4& right);
 	friend vec4 operator/(vec4 left, const vec4& right);
 
+	friend vec4 operator*(vec4 left, const float& multiplier);
+
 	vec4& operator+=(const vec4& other);
 	vec4& operator-=(const vec4& other);
 	vec4& operator*=(const vec4& other);
 	vec4& operator/=(const vec4& other);
+
+	vec4& operator*=(const float& multiplier);
 
 	friend std::ostream& operator<<(std::ostream& stream, const vec4& vector);
 };

@@ -132,25 +132,25 @@ mat4 mat4::rotationPitchYawRoll(const vec3& angles)
 
 mat4 mat4::lootAt(const vec3& from, const vec3& to, const vec3& tmp)
 {
-	vec3 f(vec3::normalize(from - to));						// forward
-	vec3 r = vec3::crossProduct(vec3::normalize(tmp), f);	// right
-	vec3 u = vec3::crossProduct(f, r);						// up
+	vec3 f(vec3::normalize(from - to));				// forward
+	vec3 r = vec3::cross(vec3::normalize(tmp), f);	// right
+	vec3 u = vec3::cross(f, r);						// up
 
 	mat4 viewMatrix;
 	viewMatrix.elements[0][0] = r.x;
 	viewMatrix.elements[0][1] = r.y;
 	viewMatrix.elements[0][2] = r.z;
-	viewMatrix.elements[0][3] = -vec3::dotProduct(r, from);
+	viewMatrix.elements[0][3] = -vec3::dot(r, from);
 
 	viewMatrix.elements[1][0] = u.x;
 	viewMatrix.elements[1][1] = u.y;
 	viewMatrix.elements[1][2] = u.z;
-	viewMatrix.elements[1][3] = -vec3::dotProduct(u, from);
+	viewMatrix.elements[1][3] = -vec3::dot(u, from);
 
 	viewMatrix.elements[2][0] = f.x;
 	viewMatrix.elements[2][1] = f.y;
 	viewMatrix.elements[2][2] = f.z;
-	viewMatrix.elements[2][3] = -vec3::dotProduct(f, from);
+	viewMatrix.elements[2][3] = -vec3::dot(f, from);
 
 	viewMatrix.elements[3][0] = 0;
 	viewMatrix.elements[3][1] = 0;
@@ -201,7 +201,7 @@ mat4 operator*(mat4 left, const mat4& right)
 	return left.mult(right);
 }
 
-vec4 operator*(mat4 matrix, vec4& vector)
+vec4 operator*(mat4 matrix, vec4 vector)
 {
 	return matrix.mult(vector);
 }

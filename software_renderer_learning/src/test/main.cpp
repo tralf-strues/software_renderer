@@ -6,9 +6,10 @@
 #include "../engine/math/engineMath.h"
 #include "../engine/tools/OBJLoader.h"
 
-#define FPS_LIMIT 75
+#define FPS_LIMIT 120
 #define WIDTH 1280 // 640, 1280
 #define HEIGHT 720 // 480, 720
+#define VELOCITY 0.2
 
 bool init();
 void close();
@@ -16,6 +17,8 @@ void close();
 Display display;
 
 SDL_Window* gWindow = NULL;
+
+vec2 mousePosition;
 
 bool init()
 {
@@ -97,13 +100,44 @@ int main(int argc, char* args[])
 		meshes.push_back(person);
 		meshes.push_back(stall);
 
+		int totalNumberOfFaces = 0;
+		int totalNumberOfVertices = 0;
+		for (Mesh mesh : meshes)
+		{
+			totalNumberOfFaces += mesh.faces.size();
+			totalNumberOfVertices += mesh.vertices.size();
+		}
+
+		std::cout << "TOTAL {faces: " << 
+			totalNumberOfFaces << 
+			", vertices: " << 
+			totalNumberOfVertices <<
+			"}" <<
+			std::endl;
+
 		// FPS counter
 		Uint32 frameStart;
 		int frameTime;
 
 		// Camera:
-		Camera camera(vec3(0, 5, 35), vec3(0, 0, 0));
+		Camera camera(vec3(0, 10, 70), vec3(0, 0, 0));
+		int mX, mY;
+		SDL_GetMouseState(&mX, &mY);
+		mousePosition = vec2(mX, mY);
+
 		int angle = 0;
+		bool rotating = false;
+		bool lightFollowingCamera = true;
+
+		//Light Sources:
+		LightSource lightSource(camera.position, vec4(255, 255, 255, 255), 1);
+
+		//Rendering specification
+		BackFaceCulling backFaceCulling = BACK_FACE_CULLING_ENABLED_WCS;
+		RenderingType renderingType = RASTERIZATION;
+		ProjectionType projectionType = PERSPECTIVE_PROJECTION;
+		ShadingType shadingType = GOURAUD_SHADING;
+
 		while (!quit)
 		{
 			frameStart = SDL_GetTicks();
@@ -114,6 +148,94 @@ int main(int argc, char* args[])
 				//User requests quit
 				if (e.type == SDL_QUIT)
 					quit = true;
+				else if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP)
+				{
+					const Uint8 *keystate = SDL_GetKeyboardState(NULL);
+
+					if (keystate[SDL_SCANCODE_ESCAPE])
+						quit = true;
+
+					if (keystate[SDL_SCANCODE_SPACE])
+						rotating = !rotating;
+
+					if (keystate[SDL_SCANCODE_T])
+						lightFollowingCamera = !lightFollowingCamera;
+
+					if (keystate[SDL_SCANCODE_B])
+					{
+						if (backFaceCulling == BACK_FACE_CULLING_ENABLED_WCS)
+							backFaceCulling = BACK_FACE_CULLING_ENABLED_NDCS;
+						else if (backFaceCulling == BACK_FACE_CULLING_ENABLED_NDCS)
+							backFaceCulling = BACK_FACE_CULLING_DISABLED;
+						else if (backFaceCulling == BACK_FACE_CULLING_DISABLED)
+							backFaceCulling = BACK_FACE_CULLING_ENABLED_WCS;
+					}
+
+					if (keystate[SDL_SCANCODE_R])
+					{
+						if (renderingType == RASTERIZATION)
+							renderingType = WIREFRAME_RENDERING;
+						else
+							renderingType = RASTERIZATION;
+					}
+
+					if (keystate[SDL_SCANCODE_P])
+					{
+						if (projectionType == PERSPECTIVE_PROJECTION)
+							projectionType = ORTHOGRAPHIC_PROJECTION;
+						else
+							projectionType = PERSPECTIVE_PROJECTION;
+					}
+
+					if (keystate[SDL_SCANCODE_L])
+					{
+						if (shadingType == GOURAUD_SHADING)
+							shadingType = FLAT_SHADING;
+						else
+							shadingType = GOURAUD_SHADING;
+					}
+
+					if (keystate[SDL_SCANCODE_O])
+						camera.to = vec3(0, 0, 0);
+
+					if (keystate[SDL_SCANCODE_W])
+						camera.position += vec3::normalize(camera.to - camera.position) * VELOCITY;
+
+					if (keystate[SDL_SCANCODE_A])
+					{
+						// todo change (0, 1, 0) to a constant
+						vec3 r = vec3::cross(vec3(0, 1, 0),
+											 vec3::normalize(camera.position - camera.to));
+						camera.position -= r * VELOCITY;
+						camera.to -= r * VELOCITY;
+					}
+
+					if (keystate[SDL_SCANCODE_S])
+						camera.position -= vec3::normalize(camera.to - camera.position) * VELOCITY;
+
+					if (keystate[SDL_SCANCODE_D])
+					{
+						// todo change (0, 1, 0) to a constant
+						vec3 r = vec3::cross(vec3(0, 1, 0),
+											 vec3::normalize(camera.position - camera.to));
+						camera.position += r * VELOCITY;
+						camera.to += r * VELOCITY;
+					}
+				}
+				else if (e.type == SDL_MOUSEMOTION || e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEBUTTONUP)
+				{
+					int xMouse, yMouse;
+					SDL_GetMouseState(&xMouse, &yMouse);
+
+					std::cout << "(" << xMouse << ", " << yMouse << ")\n";
+
+					float xMouseDelta = xMouse - mousePosition.x;
+					float yMouseDelta = yMouse - mousePosition.y;
+
+					vec3 angles(-xMouseDelta / 1000000.0f, -yMouseDelta / 1000000.0f, 0);
+					vec4 forward = mat4::rotationPitchYawRoll(angles) * vec4::homogeneous(camera.to - camera.position);
+					camera.to = camera.position + vec4::toVec3(forward);
+				}
 			}
 
 
@@ -123,9 +245,17 @@ int main(int argc, char* args[])
 			{
 				meshes.at(i).rotation.setCoordinate(1, degreesToRadians(angle));
 			}
-			angle = (angle + 1) % 360;
 
-			display.render(camera, meshes, true, false);
+			if (rotating)
+				angle = (angle + 1) % 360;
+
+			if (lightFollowingCamera)
+				lightSource.position = camera.position;
+			else 
+				lightSource.position = vec3(0, 10, 70);
+
+			display.render(camera, lightSource, meshes, 
+						   backFaceCulling, renderingType, projectionType, shadingType);
 
 			SDL_UpdateWindowSurface(gWindow);
 

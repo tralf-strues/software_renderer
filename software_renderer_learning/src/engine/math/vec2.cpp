@@ -53,7 +53,7 @@ vec2 vec2::normalize(const vec2 vector)
 	return newVector;
 }
 
-float vec2::dotProduct(const vec2 left, const vec2 right)
+float vec2::dot(const vec2 left, const vec2 right)
 {
 	float product = 0;
 	product += left.x * right.x;
@@ -94,6 +94,14 @@ vec2& vec2::div(const vec2& other)
 	return *this;
 }
 
+vec2& vec2::mult(const float& multiplier)
+{
+	x *= multiplier;
+	y *= multiplier;
+
+	return *this;
+}
+
 vec2 operator+(vec2 left, const vec2& right)
 {
 	return left.add(right);
@@ -112,6 +120,11 @@ vec2 operator*(vec2 left, const vec2& right)
 vec2 operator/(vec2 left, const vec2& right)
 {
 	return left.div(right);
+}
+
+vec2 operator*(vec2 left, const float& multiplier)
+{
+	return left.mult(multiplier);
 }
 
 vec2& vec2::operator+=(const vec2& other)
@@ -133,6 +146,12 @@ vec2& vec2::operator/=(const vec2& other)
 {
 	return div(other);
 }
+
+vec2& vec2::operator*=(const float& multiplier)
+{
+	return mult(multiplier);
+}
+
 
 std::ostream& operator<<(std::ostream& stream, const vec2& vector)
 {

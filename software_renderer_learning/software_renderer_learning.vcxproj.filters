@@ -44,6 +44,12 @@
     <ClCompile Include="src\engine\Display.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\engine\meshes\Vertex.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\engine\entities\LightSource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\engine\math\engineMath.h">
@@ -79,12 +85,19 @@
     <ClInclude Include="src\engine\Display.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\engine\meshes\Vertex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\engine\entities\LightSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\hello_world.bmp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL2.dll" />
+    <None Include="src\test\SDL2.dll" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="res\dragon.obj" />

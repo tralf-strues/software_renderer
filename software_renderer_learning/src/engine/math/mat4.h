@@ -15,7 +15,7 @@ struct mat4
 	static mat4 perspective(float left, float right, float bottom, float top, float near, float far);
 
 	/*
-		fovy   - specifies the field of view angle, in degrees, in the y direction
+		fovy   - specifies the field of view angle, in radians, in the y direction
 		aspect - screen.width / scren.height;
 		near  - specifies the distance from the viewer to the near clipping plane (always positive)
 		far   - specifies the distance from the viewer to the far clipping plane (always positive)
@@ -29,5 +29,5 @@ struct mat4
 	mat4 mult(const mat4& other);
 	vec4 mult(vec4& vector);
 	friend mat4 operator*(mat4 left, const mat4& right);
-	friend vec4 operator*(mat4 matrix, vec4& vector);
+	friend vec4 operator*(mat4 matrix, vec4 vector);
 };

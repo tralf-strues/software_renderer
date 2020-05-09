@@ -64,7 +64,7 @@ vec3 vec3::normalize(const vec3 vector)
 	return newVector;
 }
 
-float vec3::dotProduct(const vec3 left, const vec3 right)
+float vec3::dot(const vec3 left, const vec3 right)
 {
 	float product = 0;
 	product += left.x * right.x;
@@ -74,7 +74,7 @@ float vec3::dotProduct(const vec3 left, const vec3 right)
 	return product;
 }
 
-vec3 vec3::crossProduct(const vec3 left, const vec3 right)
+vec3 vec3::cross(const vec3 left, const vec3 right)
 {
 	vec3 product;
 	product.x = left.y * right.z - left.z * right.y;
@@ -120,6 +120,15 @@ vec3& vec3::div(const vec3& other)
 	return *this;
 }
 
+vec3& vec3::mult(const float& multiplier)
+{
+	x *= multiplier;
+	y *= multiplier;
+	z *= multiplier;
+
+	return *this;
+}
+
 vec3 operator+(vec3 left, const vec3& right)
 {
 	return left.add(right);
@@ -140,6 +149,11 @@ vec3 operator/(vec3 left, const vec3& right)
 	return left.div(right);
 }
 
+vec3 operator*(vec3 left, const float& multiplier)
+{
+	return left.mult(multiplier);
+}
+
 vec3& vec3::operator+=(const vec3& other)
 {
 	return add(other);
@@ -158,6 +172,11 @@ vec3& vec3::operator*=(const vec3& other)
 vec3& vec3::operator/=(const vec3& other)
 {
 	return div(other);
+}
+
+vec3& vec3::operator*=(const float& multiplier)
+{
+	return mult(multiplier);
 }
 
 std::ostream& operator<<(std::ostream& stream, const vec3& vector)
