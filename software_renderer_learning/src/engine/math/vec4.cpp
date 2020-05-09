@@ -75,16 +75,28 @@ vec4 vec4::homogeneous(const vec3 vector)
 
 vec4 vec4::normalize(const vec4 vector)
 {
-	float length = sqrt(vector.x * vector.x + 
-						vector.y * vector.y + 
-						vector.z * vector.z + 
-						vector.w * vector.w);
+	float length = vec4::length(vector);
 
 	vec4 newVector(vector.x / length,
 				   vector.y / length, 
 				   vector.z / length, 
 				   vector.w / length);
 	return newVector;
+}
+
+float vec4::length(const vec4 vector)
+{
+	return sqrt(vector.x * vector.x +
+				vector.y * vector.y +
+				vector.z * vector.z +
+				vector.w * vector.w);
+}
+
+float vec4::length3d(const vec4 vector)
+{
+	return sqrt(vector.x * vector.x +
+				vector.y * vector.y +
+				vector.z * vector.z);
 }
 
 float vec4::dot(const vec4 left, const vec4 right)

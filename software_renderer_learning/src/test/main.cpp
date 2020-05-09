@@ -9,7 +9,10 @@
 #define FPS_LIMIT 120
 #define WIDTH 1280 // 640, 1280
 #define HEIGHT 720 // 480, 720
-#define VELOCITY 0.2
+#define CENTER_X 640
+#define CENTER_Y 360
+#define VELOCITY 0.3
+#define MOUSE_SENSITIVITY 0.001
 
 bool init();
 void close();
@@ -17,8 +20,6 @@ void close();
 Display display;
 
 SDL_Window* gWindow = NULL;
-
-vec2 mousePosition;
 
 bool init()
 {
@@ -45,6 +46,11 @@ bool init()
 								   WIDTH,
 								   HEIGHT,
 								   SDL_WINDOW_SHOWN);
+
+		/*SDL_SetWindowFullscreen(gWindow, 0);*/
+		/*SDL_SetRelativeMouseMode(SDL_TRUE);*/ // hides cursor outside of the game window
+		SDL_ShowCursor(SDL_DISABLE);
+
 		if (gWindow == NULL)
 		{
 			printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
@@ -108,9 +114,9 @@ int main(int argc, char* args[])
 			totalNumberOfVertices += mesh.vertices.size();
 		}
 
-		std::cout << "TOTAL {faces: " << 
-			totalNumberOfFaces << 
-			", vertices: " << 
+		std::cout << "TOTAL {faces: " <<
+			totalNumberOfFaces <<
+			", vertices: " <<
 			totalNumberOfVertices <<
 			"}" <<
 			std::endl;
@@ -120,10 +126,9 @@ int main(int argc, char* args[])
 		int frameTime;
 
 		// Camera:
-		Camera camera(vec3(0, 10, 70), vec3(0, 0, 0));
-		int mX, mY;
-		SDL_GetMouseState(&mX, &mY);
-		mousePosition = vec2(mX, mY);
+		Camera camera(vec3(0, 10, 70), vec3(0, 0, 0), 0);
+		int xMouse, yMouse;
+		SDL_WarpMouseInWindow(gWindow, CENTER_X, CENTER_Y);
 
 		int angle = 0;
 		bool rotating = false;
@@ -142,6 +147,32 @@ int main(int argc, char* args[])
 		{
 			frameStart = SDL_GetTicks();
 
+			const Uint8* keystate = SDL_GetKeyboardState(NULL);
+
+			if (keystate[SDL_SCANCODE_W])
+				camera.position += vec3::normalize(camera.to - camera.position) * VELOCITY;
+
+			if (keystate[SDL_SCANCODE_A])
+			{
+				// todo change (0, 1, 0) to a constant
+				vec3 r = vec3::cross(vec3(0, 1, 0),
+									 vec3::normalize(camera.position - camera.to));
+				camera.position -= r * VELOCITY;
+				camera.to -= r * VELOCITY;
+			}
+
+			if (keystate[SDL_SCANCODE_S])
+				camera.position -= vec3::normalize(camera.to - camera.position) * VELOCITY;
+
+			if (keystate[SDL_SCANCODE_D])
+			{
+				// todo change (0, 1, 0) to a constant
+				vec3 r = vec3::cross(vec3(0, 1, 0),
+									 vec3::normalize(camera.position - camera.to));
+				camera.position += r * VELOCITY;
+				camera.to += r * VELOCITY;
+			}
+
 			//Handle events on queue
 			while (SDL_PollEvent(&e) != 0)
 			{
@@ -150,8 +181,6 @@ int main(int argc, char* args[])
 					quit = true;
 				else if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP)
 				{
-					const Uint8 *keystate = SDL_GetKeyboardState(NULL);
-
 					if (keystate[SDL_SCANCODE_ESCAPE])
 						quit = true;
 
@@ -197,44 +226,51 @@ int main(int argc, char* args[])
 
 					if (keystate[SDL_SCANCODE_O])
 						camera.to = vec3(0, 0, 0);
-
-					if (keystate[SDL_SCANCODE_W])
-						camera.position += vec3::normalize(camera.to - camera.position) * VELOCITY;
-
-					if (keystate[SDL_SCANCODE_A])
-					{
-						// todo change (0, 1, 0) to a constant
-						vec3 r = vec3::cross(vec3(0, 1, 0),
-											 vec3::normalize(camera.position - camera.to));
-						camera.position -= r * VELOCITY;
-						camera.to -= r * VELOCITY;
-					}
-
-					if (keystate[SDL_SCANCODE_S])
-						camera.position -= vec3::normalize(camera.to - camera.position) * VELOCITY;
-
-					if (keystate[SDL_SCANCODE_D])
-					{
-						// todo change (0, 1, 0) to a constant
-						vec3 r = vec3::cross(vec3(0, 1, 0),
-											 vec3::normalize(camera.position - camera.to));
-						camera.position += r * VELOCITY;
-						camera.to += r * VELOCITY;
-					}
 				}
 				else if (e.type == SDL_MOUSEMOTION || e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEBUTTONUP)
 				{
-					int xMouse, yMouse;
 					SDL_GetMouseState(&xMouse, &yMouse);
 
 					std::cout << "(" << xMouse << ", " << yMouse << ")\n";
 
-					float xMouseDelta = xMouse - mousePosition.x;
-					float yMouseDelta = yMouse - mousePosition.y;
+					float xMouseDelta = xMouse - CENTER_X;
+					float yMouseDelta = yMouse - CENTER_Y;
 
-					vec3 angles(-xMouseDelta / 1000000.0f, -yMouseDelta / 1000000.0f, 0);
-					vec4 forward = mat4::rotationPitchYawRoll(angles) * vec4::homogeneous(camera.to - camera.position);
-					camera.to = camera.position + vec4::toVec3(forward);
+					SDL_WarpMouseInWindow(gWindow, CENTER_X, CENTER_Y);
+
+					vec3 anglesXZ(0, -xMouseDelta * MOUSE_SENSITIVITY, 0);
+
+					/* angle between forward and its projection on xz plane */
+					float angleYDelta = -yMouseDelta * MOUSE_SENSITIVITY; 
+					vec3 forward = camera.to - camera.position;
+					vec3 forwardXZ(forward.x, 0, forward.z);
+
+					forwardXZ = vec4::toVec3(mat4::rotationPitchYawRoll(anglesXZ) * vec4::homogeneous(forwardXZ));
+					
+					vec3 forwardY(0, 0, 0);
+					if (camera.angleY == 0)
+					{
+						forwardY.y = vec3::length(forward) * sin(camera.angleY + angleYDelta);
+						camera.angleY = camera.angleY + angleYDelta;
+					}
+					else if (camera.angleY + angleYDelta > ANGLE_Y_LIMIT)
+					{
+						forwardY.y = forward.y * sin(ANGLE_Y_LIMIT) / sin(camera.angleY);
+						camera.angleY = ANGLE_Y_LIMIT;
+					}
+					else if (camera.angleY + angleYDelta < -ANGLE_Y_LIMIT)
+					{
+						forwardY.y = forward.y * sin(-ANGLE_Y_LIMIT) / sin(camera.angleY);
+						camera.angleY = -ANGLE_Y_LIMIT;
+					}
+					else
+					{
+						forwardY.y = forward.y * sin(camera.angleY + angleYDelta) / sin(camera.angleY);
+						camera.angleY = camera.angleY + angleYDelta;
+					}
+
+					forward = forwardXZ + forwardY;
+					camera.to = camera.position + forward;
 				}
 			}
 
@@ -251,10 +287,10 @@ int main(int argc, char* args[])
 
 			if (lightFollowingCamera)
 				lightSource.position = camera.position;
-			else 
+			else
 				lightSource.position = vec3(0, 10, 70);
 
-			display.render(camera, lightSource, meshes, 
+			display.render(camera, lightSource, meshes,
 						   backFaceCulling, renderingType, projectionType, shadingType);
 
 			SDL_UpdateWindowSurface(gWindow);
@@ -269,8 +305,6 @@ int main(int argc, char* args[])
 			{
 				SDL_SetWindowTitle(gWindow, ("Software renderer [FPS: " + std::to_string(1000 / frameTime) + "]").c_str());
 			}
-
-			//std::cout << "FPS: " << 1000 / frameTime << std::endl;
 		}
 	}
 	close();

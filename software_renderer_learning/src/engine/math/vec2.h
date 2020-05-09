@@ -12,6 +12,7 @@ struct vec2
 	void setCoordinate(const int i, const float coordinate);
 
 	static vec2 normalize(const vec2 vector);
+	static float length(const vec2 vector);
 	static float dot(const vec2 left, const vec2 right);
 
 	vec2& add(const vec2& other);

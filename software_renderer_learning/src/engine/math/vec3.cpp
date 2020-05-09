@@ -64,6 +64,13 @@ vec3 vec3::normalize(const vec3 vector)
 	return newVector;
 }
 
+float vec3::length(const vec3 vector)
+{
+	return sqrt(vector.x * vector.x +
+				vector.y * vector.y +
+				vector.z * vector.z);
+}
+
 float vec3::dot(const vec3 left, const vec3 right)
 {
 	float product = 0;

@@ -1,13 +1,15 @@
 #pragma once
 #include "../math/engineMath.h"
 
+#define ANGLE_Y_LIMIT 1.56
+
 struct Camera 
 {
 	vec3 position;
 	vec3 to;
+	float angleY; // angle between forward and its projection on xz plane
 
-	// pitch - around z; yaw - around y; roll - around x
-	Camera(vec3 position, vec3 to);
+	Camera(vec3 position, vec3 to, float angleY);
 	~Camera();
 
 };

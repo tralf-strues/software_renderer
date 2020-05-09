@@ -12,6 +12,7 @@ struct vec3
 	void setCoordinate(const int i, const float coordinate);
 
 	static vec3 normalize(const vec3 vector);
+	static float length(const vec3 vector);
 	static float dot(const vec3 left, const vec3 right);
 	static vec3 cross(const vec3 left, const vec3 right);
 

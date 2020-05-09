@@ -53,6 +53,12 @@ vec2 vec2::normalize(const vec2 vector)
 	return newVector;
 }
 
+float vec2::length(const vec2 vector)
+{
+	return sqrt(vector.x * vector.x +
+				vector.y * vector.y);
+}
+
 float vec2::dot(const vec2 left, const vec2 right)
 {
 	float product = 0;

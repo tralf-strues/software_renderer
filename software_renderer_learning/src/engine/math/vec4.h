@@ -15,6 +15,8 @@ struct vec4
 	static vec4 homogeneous(const vec3 vector);
 	static vec3 toVec3(const vec4 vector);
 	static vec4 normalize(const vec4 vector);
+	static float length(const vec4 vector);
+	static float length3d(const vec4 vector);
 	static float dot(const vec4 left, const vec4 right);
 
 	vec4& add(const vec4& other);
