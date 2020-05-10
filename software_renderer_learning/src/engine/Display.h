@@ -7,6 +7,8 @@
 #include "entities/Camera.h"
 #include "entities/LightSource.h"
 
+#define SKY_COLOR 100, 220, 255, 255
+
 enum ShadingType
 {
 	FLAT_SHADING,

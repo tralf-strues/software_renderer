@@ -11,7 +11,7 @@
 #define HEIGHT 720 // 480, 720
 #define CENTER_X 640
 #define CENTER_Y 360
-#define VELOCITY 0.3
+#define VELOCITY 0.6
 #define MOUSE_SENSITIVITY 0.001
 
 bool init();

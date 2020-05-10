@@ -58,14 +58,14 @@ void Display::render(Camera& camera,
 	this->projectionType = projectionType;
 	this->shadingType = shadingType;
 
-	clear(vec4(0, 0, 0, 1));
+	clear(vec4(SKY_COLOR));
 
 	mat4 viewMatrix = mat4::lootAt(camera.position, camera.to);
 	mat4 projectionMatrix;
 	switch (projectionType)
 	{
 		case PERSPECTIVE_PROJECTION:
-		projectionMatrix = mat4::perspectiveFOV(0.78f, width / height, 5, 100);
+		projectionMatrix = mat4::perspectiveFOV(0.78f, width / height, 5, 1000);
 		break;
 
 		case ORTHOGRAPHIC_PROJECTION:
@@ -163,7 +163,8 @@ void Display::render(Camera& camera,
 
 void Display::clear(vec4 color)
 {
-	SDL_FillRect(surface, 0, 0);
+	Uint32 rgbaColor = SDL_MapRGBA(surface->format, color.x, color.y, color.z, color.w);
+	SDL_FillRect(surface, 0, rgbaColor);
 
 	// todo: set to 1.1 because z is in range [-1; 1]
 	std::fill(depthBuffer.begin(), depthBuffer.end(), 100);
