@@ -13,7 +13,7 @@ mat4::~mat4()
 
 }
 
-mat4 mat4::identity(float diagonal)
+mat4& mat4::identity(float diagonal)
 {
 	mat4 identity;
 
@@ -25,7 +25,7 @@ mat4 mat4::identity(float diagonal)
 	return identity;
 }
 
-mat4 mat4::orthographic(float left, float right, float bottom, float top, float near, float far)
+mat4& mat4::orthographic(float left, float right, float bottom, float top, float near, float far)
 {
 	mat4 ortho;
 
@@ -52,7 +52,7 @@ mat4 mat4::orthographic(float left, float right, float bottom, float top, float 
 	return ortho;
 }
 
-mat4 mat4::perspective(float left, float right, float bottom, float top, float near, float far)
+mat4& mat4::perspective(float left, float right, float bottom, float top, float near, float far)
 {
 	mat4 perspective;
 
@@ -79,7 +79,7 @@ mat4 mat4::perspective(float left, float right, float bottom, float top, float n
 	return perspective;
 }
 
-mat4 mat4::perspectiveFOV(float fovy, float aspect, float near, float far)
+mat4& mat4::perspectiveFOV(float fovy, float aspect, float near, float far)
 {
 	float top = near * std::tan(fovy / 2);
 	float bottom = -top;
@@ -89,7 +89,7 @@ mat4 mat4::perspectiveFOV(float fovy, float aspect, float near, float far)
 	return perspective(left, right, bottom, top, near, far);
 }
 
-mat4 mat4::translation(const vec3& translate)
+mat4& mat4::translation(const vec3& translate)
 {
 	mat4 result = identity(1.0f);
 
@@ -100,7 +100,7 @@ mat4 mat4::translation(const vec3& translate)
 	return result;
 }
 
-mat4 mat4::rotationPitchYawRoll(const vec3& angles)
+mat4& mat4::rotationPitchYawRoll(const vec3& angles)
 {
 	float sinph = std::sin(angles.x), cosph = std::cos(angles.x),
 		sinth = std::sin(angles.y), costh = std::cos(angles.y),
@@ -130,9 +130,39 @@ mat4 mat4::rotationPitchYawRoll(const vec3& angles)
 	return rotation;
 }
 
-mat4 mat4::lootAt(const vec3& from, const vec3& to, const vec3& tmp)
+mat4& mat4::lootAtDirectionPoints(const vec3& from, const vec3& to, const vec3& tmp)
 {
 	vec3 f(vec3::normalize(from - to));				// forward
+	vec3 r = vec3::cross(vec3::normalize(tmp), f);	// right
+	vec3 u = vec3::cross(f, r);						// up
+
+	mat4 viewMatrix;
+	viewMatrix.elements[0][0] = r.x;
+	viewMatrix.elements[0][1] = r.y;
+	viewMatrix.elements[0][2] = r.z;
+	viewMatrix.elements[0][3] = -vec3::dot(r, from);
+
+	viewMatrix.elements[1][0] = u.x;
+	viewMatrix.elements[1][1] = u.y;
+	viewMatrix.elements[1][2] = u.z;
+	viewMatrix.elements[1][3] = -vec3::dot(u, from);
+
+	viewMatrix.elements[2][0] = f.x;
+	viewMatrix.elements[2][1] = f.y;
+	viewMatrix.elements[2][2] = f.z;
+	viewMatrix.elements[2][3] = -vec3::dot(f, from);
+
+	viewMatrix.elements[3][0] = 0;
+	viewMatrix.elements[3][1] = 0;
+	viewMatrix.elements[3][2] = 0;
+	viewMatrix.elements[3][3] = 1;
+
+	return viewMatrix;
+}
+
+mat4& mat4::lootAtDirectionVector(const vec3& from, const vec3& forward, const vec3& tmp)
+{
+	vec3 f(vec3::normalize(forward));				// forward
 	vec3 r = vec3::cross(vec3::normalize(tmp), f);	// right
 	vec3 u = vec3::cross(f, r);						// up
 

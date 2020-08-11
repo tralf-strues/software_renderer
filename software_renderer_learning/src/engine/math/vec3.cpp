@@ -52,7 +52,7 @@ void vec3::setCoordinate(const int i, const float coordinate)
 	}
 }
 
-vec3 vec3::normalize(const vec3 vector)
+vec3 vec3::normalize(const vec3& vector)
 {
 	float length = sqrt(vector.x * vector.x +
 						vector.y * vector.y +
@@ -64,14 +64,14 @@ vec3 vec3::normalize(const vec3 vector)
 	return newVector;
 }
 
-float vec3::length(const vec3 vector)
+float vec3::length(const vec3& vector)
 {
 	return sqrt(vector.x * vector.x +
 				vector.y * vector.y +
 				vector.z * vector.z);
 }
 
-float vec3::dot(const vec3 left, const vec3 right)
+float vec3::dot(const vec3& left, const vec3& right)
 {
 	float product = 0;
 	product += left.x * right.x;
@@ -81,7 +81,7 @@ float vec3::dot(const vec3 left, const vec3 right)
 	return product;
 }
 
-vec3 vec3::cross(const vec3 left, const vec3 right)
+vec3 vec3::cross(const vec3& left, const vec3& right)
 {
 	vec3 product;
 	product.x = left.y * right.z - left.z * right.y;

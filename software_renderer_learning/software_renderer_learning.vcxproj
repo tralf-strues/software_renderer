@@ -159,6 +159,7 @@
   <ItemGroup>
     <ClCompile Include="src\engine\entities\LightSource.cpp" />
     <ClCompile Include="src\engine\entities\Camera.cpp" />
+    <ClCompile Include="src\engine\entities\Terrain.cpp" />
     <ClCompile Include="src\engine\math\mat4.cpp" />
     <ClCompile Include="src\engine\math\MathTools.cpp" />
     <ClCompile Include="src\engine\math\vec2.cpp" />
@@ -172,6 +173,7 @@
     <ClCompile Include="src\engine\meshes\Vertex.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\engine\entities\Terrain.h" />
     <ClInclude Include="src\engine\entities\LightSource.h" />
     <ClInclude Include="src\engine\entities\Camera.h" />
     <ClInclude Include="src\engine\math\MathTools.h" />
@@ -236,6 +238,21 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="res\RubixCube.obj">
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="res\teapot.obj">
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="res\utahteapot.obj">
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="res\monkey.obj">
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>

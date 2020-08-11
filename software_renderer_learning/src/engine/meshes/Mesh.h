@@ -16,4 +16,8 @@ struct Mesh {
 	vec3 position;
 	vec3 rotation;
 
+	void setScale(float newScale);
+
+private:
+	float scale;
 };

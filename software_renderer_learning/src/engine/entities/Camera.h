@@ -6,10 +6,12 @@
 struct Camera 
 {
 	vec3 position;
-	vec3 to;
+	//vec3 to;
+	vec3 forward;
 	float angleY; // angle between forward and its projection on xz plane
 
-	Camera(vec3 position, vec3 to, float angleY);
+	Camera(vec3 position, vec3 forward);
+	//Camera(vec3 position, vec3 to, float angleY);
 	~Camera();
 
 };

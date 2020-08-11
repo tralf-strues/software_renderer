@@ -50,6 +50,9 @@
     <ClCompile Include="src\engine\entities\LightSource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\engine\entities\Terrain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\engine\math\engineMath.h">
@@ -91,6 +94,9 @@
     <ClInclude Include="src\engine\entities\LightSource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\engine\entities\Terrain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\hello_world.bmp" />
@@ -114,5 +120,10 @@
     <Text Include="res\tree.obj" />
     <Text Include="res\stanfordBunny.obj" />
     <Text Include="res\RubixCube.obj" />
+    <Text Include="res\teapot.obj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="res\utahteapot.obj" />
+    <Object Include="res\monkey.obj" />
   </ItemGroup>
 </Project>

@@ -2,13 +2,14 @@
 #include <SDL.h>
 #include <stdio.h>
 #include <string>
+#include "../engine/entities/Terrain.h"
 #include "../engine/Display.h"
 #include "../engine/math/engineMath.h"
 #include "../engine/tools/OBJLoader.h"
 
 #define FPS_LIMIT 120
-#define WIDTH 1280 // 640, 1280
-#define HEIGHT 720 // 480, 720
+#define WIDTH 1120 // 640, 960, 1120, 1280, 1360, 1440
+#define HEIGHT 630 // 480, 540, 630, 720, 765, 810
 #define CENTER_X 640
 #define CENTER_Y 360
 #define VELOCITY 0.6
@@ -75,6 +76,16 @@ void close()
 	SDL_Quit();
 }
 
+void generateSkybox()
+{
+
+}
+
+void updateViewMatrix(mat4& viewMatrix, Camera& camera)
+{
+	viewMatrix = mat4::lootAtDirectionVector(camera.position, camera.forward);
+}
+
 int main(int argc, char* args[])
 {
 	//Start up SDL and create window
@@ -93,18 +104,39 @@ int main(int argc, char* args[])
 		std::vector<Mesh> meshes;
 
 		Mesh pine = loadOBJ("Pine", "pine");
-		pine.position = vec3(10, -10, -10);
+		pine.position = vec3(10, 0, -10);
 		Mesh box = loadOBJ("Box", "box");
-		box.position = vec3(0, 0, 20);
+		box.position = vec3(0, 1, 20);
 		Mesh person = loadOBJ("Person", "person");
 		person.position = vec3(-10, 0, 0);
 		Mesh stall = loadOBJ("Stall", "stall");
-		stall.position = vec3(-2, 2, 0);
+		stall.position = vec3(-2, 0, 0);
+		Mesh bunny = loadOBJ("Bunny", "bunny");
+		bunny.position = vec3(-20, 0, 0);
+		Mesh dragon = loadOBJ("Dragon", "dragon");
+		dragon.position = vec3(20, 0, 0);
+		Mesh teapot = loadOBJ("Teapot", "utahteapot");
+		teapot.setScale(0.1f);
+		teapot.position = vec3(20, 0, 15);
+		Mesh monkey = loadOBJ("Monkey", "monkey");
+		monkey.setScale(4.0f);
+		monkey.position = vec3(-15, 30, -15);
+		monkey.rotation = vec3(0, degreesToRadians(-135), 0);
+
+		Terrain terrain(0, 0);
+		terrain.mesh.position = vec3(-25, 0, -25);
+		std::cout << terrain.mesh.faces.size() << std::endl;
+		std::cout << terrain.mesh.vertices.size() << std::endl;
 
 		meshes.push_back(pine);
 		meshes.push_back(box);
 		meshes.push_back(person);
 		meshes.push_back(stall);
+		/*meshes.push_back(bunny);
+		meshes.push_back(dragon);*/
+		meshes.push_back(teapot);
+		meshes.push_back(monkey);
+		meshes.push_back(terrain.mesh);
 
 		int totalNumberOfFaces = 0;
 		int totalNumberOfVertices = 0;
@@ -126,7 +158,7 @@ int main(int argc, char* args[])
 		int frameTime;
 
 		// Camera:
-		Camera camera(vec3(0, 10, 70), vec3(0, 0, 0), 0);
+		Camera camera(vec3(-45, 35, -45), vec3(-1, 0, -1));
 		int xMouse, yMouse;
 		SDL_WarpMouseInWindow(gWindow, CENTER_X, CENTER_Y);
 
@@ -143,6 +175,9 @@ int main(int argc, char* args[])
 		ProjectionType projectionType = PERSPECTIVE_PROJECTION;
 		ShadingType shadingType = GOURAUD_SHADING;
 
+		mat4 viewMatrix;
+		updateViewMatrix(viewMatrix, camera);
+
 		while (!quit)
 		{
 			frameStart = SDL_GetTicks();
@@ -150,27 +185,27 @@ int main(int argc, char* args[])
 			const Uint8* keystate = SDL_GetKeyboardState(NULL);
 
 			if (keystate[SDL_SCANCODE_W])
-				camera.position += vec3::normalize(camera.to - camera.position) * VELOCITY;
+				camera.position -= vec3::normalize(camera.forward) * VELOCITY;
 
 			if (keystate[SDL_SCANCODE_A])
 			{
 				// todo change (0, 1, 0) to a constant
 				vec3 r = vec3::cross(vec3(0, 1, 0),
-									 vec3::normalize(camera.position - camera.to));
+									 vec3::normalize(camera.forward));
 				camera.position -= r * VELOCITY;
-				camera.to -= r * VELOCITY;
+				/*camera.to -= r * VELOCITY;*/
 			}
 
 			if (keystate[SDL_SCANCODE_S])
-				camera.position -= vec3::normalize(camera.to - camera.position) * VELOCITY;
+				camera.position += vec3::normalize(camera.forward) * VELOCITY;
 
 			if (keystate[SDL_SCANCODE_D])
 			{
 				// todo change (0, 1, 0) to a constant
 				vec3 r = vec3::cross(vec3(0, 1, 0),
-									 vec3::normalize(camera.position - camera.to));
+									 vec3::normalize(camera.forward));
 				camera.position += r * VELOCITY;
-				camera.to += r * VELOCITY;
+				/*camera.to += r * VELOCITY;*/
 			}
 
 			//Handle events on queue
@@ -193,16 +228,16 @@ int main(int argc, char* args[])
 					if (keystate[SDL_SCANCODE_B])
 					{
 						if (backFaceCulling == BACK_FACE_CULLING_ENABLED_WCS)
-							backFaceCulling = BACK_FACE_CULLING_ENABLED_NDCS;
-						else if (backFaceCulling == BACK_FACE_CULLING_ENABLED_NDCS)
 							backFaceCulling = BACK_FACE_CULLING_DISABLED;
-						else if (backFaceCulling == BACK_FACE_CULLING_DISABLED)
+						else
 							backFaceCulling = BACK_FACE_CULLING_ENABLED_WCS;
 					}
 
 					if (keystate[SDL_SCANCODE_R])
 					{
 						if (renderingType == RASTERIZATION)
+							renderingType = RASTERIZATION_WITH_WIREFRAME;
+						else if (renderingType == RASTERIZATION_WITH_WIREFRAME)
 							renderingType = WIREFRAME_RENDERING;
 						else
 							renderingType = RASTERIZATION;
@@ -214,6 +249,7 @@ int main(int argc, char* args[])
 							projectionType = ORTHOGRAPHIC_PROJECTION;
 						else
 							projectionType = PERSPECTIVE_PROJECTION;
+						display.updateProjectionMatrix();
 					}
 
 					if (keystate[SDL_SCANCODE_L])
@@ -225,13 +261,17 @@ int main(int argc, char* args[])
 					}
 
 					if (keystate[SDL_SCANCODE_O])
-						camera.to = vec3(0, 0, 0);
+						camera.forward = vec3(1, 0, 1); // todo
+
+					/* no need to update it in all the cases above, 
+					but I'd rather just put it here than duplicate it several times */
+					updateViewMatrix(viewMatrix, camera);
 				}
 				else if (e.type == SDL_MOUSEMOTION || e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEBUTTONUP)
 				{
 					SDL_GetMouseState(&xMouse, &yMouse);
 
-					std::cout << "(" << xMouse << ", " << yMouse << ")\n";
+					//std::cout << "ANGLE_Y: " << camera.angleY << "\n";
 
 					float xMouseDelta = xMouse - CENTER_X;
 					float yMouseDelta = yMouse - CENTER_Y;
@@ -241,56 +281,65 @@ int main(int argc, char* args[])
 					vec3 anglesXZ(0, -xMouseDelta * MOUSE_SENSITIVITY, 0);
 
 					/* angle between forward and its projection on xz plane */
-					float angleYDelta = -yMouseDelta * MOUSE_SENSITIVITY; 
-					vec3 forward = camera.to - camera.position;
-					vec3 forwardXZ(forward.x, 0, forward.z);
+					float angleYDelta = +yMouseDelta * MOUSE_SENSITIVITY;
+					//vec3 forward = camera.to - camera.position;
+					/*float original_length = vec3::length(forward);*/
+					vec3 forwardXZ(camera.forward.x, 0, camera.forward.z);
 
 					forwardXZ = vec4::toVec3(mat4::rotationPitchYawRoll(anglesXZ) * vec4::homogeneous(forwardXZ));
-					
+
 					vec3 forwardY(0, 0, 0);
 					if (camera.angleY == 0)
 					{
-						forwardY.y = vec3::length(forward) * sin(camera.angleY + angleYDelta);
+						forwardY.y = vec3::length(camera.forward) * sin(camera.angleY + angleYDelta);
 						camera.angleY = camera.angleY + angleYDelta;
 					}
 					else if (camera.angleY + angleYDelta > ANGLE_Y_LIMIT)
 					{
-						forwardY.y = forward.y * sin(ANGLE_Y_LIMIT) / sin(camera.angleY);
+						forwardY.y = camera.forward.y * sin(ANGLE_Y_LIMIT) / sin(camera.angleY);
 						camera.angleY = ANGLE_Y_LIMIT;
 					}
 					else if (camera.angleY + angleYDelta < -ANGLE_Y_LIMIT)
 					{
-						forwardY.y = forward.y * sin(-ANGLE_Y_LIMIT) / sin(camera.angleY);
+						forwardY.y = camera.forward.y * sin(-ANGLE_Y_LIMIT) / sin(camera.angleY);
 						camera.angleY = -ANGLE_Y_LIMIT;
 					}
 					else
 					{
-						forwardY.y = forward.y * sin(camera.angleY + angleYDelta) / sin(camera.angleY);
+						forwardY.y = camera.forward.y * sin(camera.angleY + angleYDelta) / sin(camera.angleY);
 						camera.angleY = camera.angleY + angleYDelta;
 					}
 
-					forward = forwardXZ + forwardY;
-					camera.to = camera.position + forward;
+					camera.forward = forwardXZ + forwardY;
+					//camera.to = camera.position + vec3::normalize(forward) * original_length;
+					/*	camera.to = camera.position + forward;*/
+
+					/* no need to update it in all the cases above,
+					but I'd rather just put it here than duplicate it several times */
+					updateViewMatrix(viewMatrix, camera);
 				}
 			}
 
 
 			//MY RENDERING
-			//std::cout << angle << std::endl;
-			for (int i = 0; i < meshes.size(); i++)
-			{
-				meshes.at(i).rotation.setCoordinate(1, degreesToRadians(angle));
-			}
-
 			if (rotating)
+			{
+				//std::cout << angle << std::endl;
+
+				for (int i = 0; i < meshes.size(); i++)
+				{
+					meshes.at(i).rotation.setCoordinate(1, degreesToRadians(angle));
+				}
+
 				angle = (angle + 1) % 360;
+			}
 
 			if (lightFollowingCamera)
 				lightSource.position = camera.position;
 			else
 				lightSource.position = vec3(0, 10, 70);
 
-			display.render(camera, lightSource, meshes,
+			display.render(camera, viewMatrix, lightSource, meshes,
 						   backFaceCulling, renderingType, projectionType, shadingType);
 
 			SDL_UpdateWindowSurface(gWindow);
