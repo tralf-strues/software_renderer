@@ -27,6 +27,8 @@ struct vec2
 	friend vec2 operator*(vec2 left, const vec2& right);
 	friend vec2 operator/(vec2 left, const vec2& right);
 
+	friend bool operator==(vec2 left, const vec2& right);
+
 	friend vec2 operator*(vec2 left, const float& multiplier);
 
 	vec2& operator+=(const vec2& other);

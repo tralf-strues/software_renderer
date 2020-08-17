@@ -28,6 +28,8 @@ struct vec3
 	friend vec3 operator*(vec3 left, const vec3& right);
 	friend vec3 operator/(vec3 left, const vec3& right);
 
+	friend bool operator==(vec3 left, const vec3& right);
+
 	friend vec3 operator*(vec3 left, const float& multiplier);
 
 	vec3& operator+=(const vec3& other);

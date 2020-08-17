@@ -32,6 +32,8 @@ struct vec4
 	friend vec4 operator*(vec4 left, const vec4& right);
 	friend vec4 operator/(vec4 left, const vec4& right);
 
+	friend bool operator==(vec4 left, const vec4& right);
+
 	friend vec4 operator*(vec4 left, const float& multiplier);
 
 	vec4& operator+=(const vec4& other);

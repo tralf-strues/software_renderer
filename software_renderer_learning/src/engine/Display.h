@@ -56,6 +56,34 @@ struct FaceData
 	Vertex& v2;
 };
 
+struct InterpolationData
+{
+	InterpolationData(float& l1NormalDotToLight, float& l2NormalDotToLight, 
+					  float& r1NormalDotToLight, float& r2NormalDotToLight,
+					  vec2& l1UV, vec2& l2UV, 
+					  vec2& r1UV, vec2& r2UV) :
+		l1NormalDotToLight(l1NormalDotToLight),
+		l2NormalDotToLight(l2NormalDotToLight),
+		r1NormalDotToLight(r1NormalDotToLight),
+		r2NormalDotToLight(r2NormalDotToLight),
+		l1UV(l1UV),
+		l2UV(l2UV),
+		r1UV(r1UV),
+		r2UV(r2UV)
+	{
+	}
+
+	float& l1NormalDotToLight;
+	float& l2NormalDotToLight;
+	float& r1NormalDotToLight;
+	float& r2NormalDotToLight;
+
+	vec2& l1UV;
+	vec2& l2UV;
+	vec2& r1UV;
+	vec2& r2UV;
+};
+
 class Display
 {
 private:
@@ -93,17 +121,38 @@ public:
 				RenderingType renderingType,
 				ProjectionType projectionType,
 				ShadingType shadingType);
+
+	void drawBitmap(int x, int y, Texture& texture);
+
 private:
 	void clear(vec4 color);
 	int project(Vertex* vertex, mat4& transformationMatrix);
 	void drawPoint(vec2 coordinates, vec4 color);
 	void drawLine(vec2 p0, vec2 p1, vec4 color);
 	void drawTriangle(FaceData& faceData, LightSource& lightSource);
-	void processScanLine(int y, vec3 l1, vec3 l2, vec3 r1, vec3 r2,
-						 FaceData& faceData, LightSource& lightSource);
-	void processScanLineFlatShading(int& y, vec3& l1, vec3& l2, vec3& r1, vec3& r2,
-									FaceData& faceData, LightSource& lightSource);
-	void processScanLineGouraudShading(int& y, vec3& l1, vec3& l2, vec3& r1, vec3& r2,
-									   FaceData& faceData, LightSource& lightSource);
+	void processScanLine(int& y, Vertex& l1, Vertex& l2, Vertex& r1, Vertex& r2,
+						 FaceData& faceData, InterpolationData interpolationData, 
+						 LightSource& lightSource);
+	void processScanLineFlatShading(int& y, Vertex& l1, Vertex& l2, Vertex& r1, Vertex& r2,
+									FaceData& faceData, InterpolationData interpolationData,
+									LightSource& lightSource);
+
+	void getStartAndEndValuesForInterpolation(vec3& l1, vec3& l2, vec3& r1, vec3& r2, FaceData& faceData,
+											  float& gradient1,
+											  float& gradient2,
+											  float& normalDotToLight0,
+											  float& normalDotToLight1,
+											  float& normalDotToLight2,
+											  float& startNormalDotToLight,
+											  float& endNormalDotToLight,
+											  vec2& uv0,
+											  vec2& uv1,
+											  vec2& uv2,
+											  vec2& startUV,
+											  vec2& endUV);
+
+	void processScanLineGouraudShading(int& y, Vertex& l1, Vertex& l2, Vertex& r1, Vertex& r2,
+									   FaceData& faceData, InterpolationData interpolationData,
+									   LightSource& lightSource);
 
 };

@@ -161,6 +161,16 @@ vec3 operator*(vec3 left, const float& multiplier)
 	return left.mult(multiplier);
 }
 
+bool operator==(vec3 left, const vec3& right)
+{
+	if (left.x == right.x &&
+		left.y == right.y &&
+		left.z == right.z)
+		return true;
+	else
+		return false;
+}
+
 vec3& vec3::operator+=(const vec3& other)
 {
 	return add(other);

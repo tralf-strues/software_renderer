@@ -2,6 +2,7 @@
 
 #include "../math/engineMath.h"
 #include "Face.h"
+#include "Texture.h"
 #include <vector>
 
 struct Mesh {
@@ -11,6 +12,7 @@ struct Mesh {
 	std::string name;
 	std::vector<vec3> vertices;
 	std::vector<vec2> textures;
+	Texture* texture = NULL;
 	std::vector<vec3> normals;
 	std::vector<Face> faces;
 	vec3 position;

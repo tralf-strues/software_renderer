@@ -167,7 +167,8 @@
     <ClCompile Include="src\engine\math\vec4.cpp" />
     <ClCompile Include="src\engine\meshes\Face.cpp" />
     <ClCompile Include="src\engine\meshes\Mesh.cpp" />
-    <ClCompile Include="src\engine\tools\OBJLoader.cpp" />
+    <ClCompile Include="src\engine\meshes\Texture.cpp" />
+    <ClCompile Include="src\engine\tools\ResLoader.cpp" />
     <ClCompile Include="src\test\main.cpp" />
     <ClCompile Include="src\engine\Display.cpp" />
     <ClCompile Include="src\engine\meshes\Vertex.cpp" />
@@ -179,7 +180,8 @@
     <ClInclude Include="src\engine\math\MathTools.h" />
     <ClInclude Include="src\engine\meshes\Face.h" />
     <ClInclude Include="src\engine\meshes\Mesh.h" />
-    <ClInclude Include="src\engine\tools\OBJLoader.h" />
+    <ClInclude Include="src\engine\meshes\Texture.h" />
+    <ClInclude Include="src\engine\tools\ResLoader.h" />
     <ClInclude Include="src\engine\Display.h" />
     <ClInclude Include="src\engine\math\engineMath.h" />
     <ClInclude Include="src\engine\math\mat4.h" />
@@ -190,10 +192,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL2.dll" />
-    <None Include="src\test\SDL2.dll" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\hello_world.bmp" />
+    <Image Include="res\monkey.bmp" />
+    <Image Include="res\monkey.jpg" />
+    <Image Include="res\stall.bmp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="res\dragon.obj" />
@@ -253,6 +257,11 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="res\monkey.obj">
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="res\suzanne.obj">
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>

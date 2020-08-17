@@ -5,21 +5,23 @@
 #include "../engine/entities/Terrain.h"
 #include "../engine/Display.h"
 #include "../engine/math/engineMath.h"
-#include "../engine/tools/OBJLoader.h"
+#include "../engine/tools/ResLoader.h"
 
 #define FPS_LIMIT 120
 #define WIDTH 1120 // 640, 960, 1120, 1280, 1360, 1440
 #define HEIGHT 630 // 480, 540, 630, 720, 765, 810
 #define CENTER_X 640
 #define CENTER_Y 360
-#define VELOCITY 0.6
-#define MOUSE_SENSITIVITY 0.001
+#define VELOCITY 0.3f
+#define MOUSE_SENSITIVITY 0.001f
+
+#define PLAYER_HIGHT 10.0f
+#define GRAVITY 0.01f
 
 bool init();
 void close();
 
 Display display;
-
 SDL_Window* gWindow = NULL;
 
 bool init()
@@ -63,6 +65,7 @@ bool init()
 			//Display
 			display = Display(gWindow, WIDTH, HEIGHT);
 		}
+
 	}
 
 	return success;
@@ -101,42 +104,66 @@ int main(int argc, char* args[])
 		SDL_Event e;
 
 		// Objects:
-		std::vector<Mesh> meshes;
+		Texture textureMonkey = loadTexture("monkey", "monkey.bmp");
+		Texture textureStall = loadTexture("stall", "stall.bmp");
 
+		printf("%d - Vector comparison\n", vec3(0, 0, 1) == vec3(0, 0, 1));
+
+		std::vector<Mesh> meshes;
 		Mesh pine = loadOBJ("Pine", "pine");
 		pine.position = vec3(10, 0, -10);
 		Mesh box = loadOBJ("Box", "box");
 		box.position = vec3(0, 1, 20);
+		box.texture = &textureStall;
 		Mesh person = loadOBJ("Person", "person");
 		person.position = vec3(-10, 0, 0);
 		Mesh stall = loadOBJ("Stall", "stall");
-		stall.position = vec3(-2, 0, 0);
-		Mesh bunny = loadOBJ("Bunny", "bunny");
+		stall.position = vec3(7, 0, 0);
+		stall.setScale(2.5);
+		stall.texture = &textureStall;
+		/*Mesh bunny = loadOBJ("Bunny", "bunny");
 		bunny.position = vec3(-20, 0, 0);
 		Mesh dragon = loadOBJ("Dragon", "dragon");
 		dragon.position = vec3(20, 0, 0);
 		Mesh teapot = loadOBJ("Teapot", "utahteapot");
 		teapot.setScale(0.1f);
-		teapot.position = vec3(20, 0, 15);
-		Mesh monkey = loadOBJ("Monkey", "monkey");
+		teapot.position = vec3(20, 0, 15);*/
+		Mesh monkey = loadOBJ("Monkey", "suzanne");
 		monkey.setScale(4.0f);
 		monkey.position = vec3(-15, 30, -15);
 		monkey.rotation = vec3(0, degreesToRadians(-135), 0);
+		monkey.texture = &textureMonkey;
 
 		Terrain terrain(0, 0);
 		terrain.mesh.position = vec3(-25, 0, -25);
 		std::cout << terrain.mesh.faces.size() << std::endl;
 		std::cout << terrain.mesh.vertices.size() << std::endl;
 
-		meshes.push_back(pine);
-		meshes.push_back(box);
+		Mesh test("test", 3, 1);
+		test.vertices = std::vector<vec3>{ vec3(0, 0, 0), vec3(5, 0, 0), vec3(5, 5, 0) };
+		test.textures = std::vector<vec2>{ vec2(0, 0), vec2(0.25, 0), vec2(0.25, 0.25) };
+		test.texture = &textureStall;
+		test.normals = std::vector<vec3>{ vec3(0, 0, -1), vec3(0, 0, -1), vec3(0, 0, -1) };
+		Face testFace;
+		testFace.vertexIndices = vec3(0, 1, 2);
+		testFace.textureIndices = vec3(0, 1, 2);
+		testFace.normalIndices = vec3(0, 1, 2);
+		test.faces = std::vector<Face>{ testFace };
+		test.position = vec3(10, 2, 10);
+		test.rotation = vec3(0, degreesToRadians(-180), 0);
+
+		//meshes.push_back(test);
+
+		//meshes.push_back(pine);
+		//meshes.push_back(box);
 		meshes.push_back(person);
 		meshes.push_back(stall);
 		/*meshes.push_back(bunny);
 		meshes.push_back(dragon);*/
-		meshes.push_back(teapot);
-		meshes.push_back(monkey);
+		//meshes.push_back(teapot);
+		/*meshes.push_back(monkey);*/
 		meshes.push_back(terrain.mesh);
+
 
 		int totalNumberOfFaces = 0;
 		int totalNumberOfVertices = 0;
@@ -158,7 +185,7 @@ int main(int argc, char* args[])
 		int frameTime;
 
 		// Camera:
-		Camera camera(vec3(-45, 35, -45), vec3(-1, 0, -1));
+		Camera camera(vec3(-45, PLAYER_HIGHT, -45), vec3(-1, 0, -1));
 		int xMouse, yMouse;
 		SDL_WarpMouseInWindow(gWindow, CENTER_X, CENTER_Y);
 
@@ -263,7 +290,7 @@ int main(int argc, char* args[])
 					if (keystate[SDL_SCANCODE_O])
 						camera.forward = vec3(1, 0, 1); // todo
 
-					/* no need to update it in all the cases above, 
+					/* no need to update it in all the cases above,
 					but I'd rather just put it here than duplicate it several times */
 					updateViewMatrix(viewMatrix, camera);
 				}
@@ -320,6 +347,13 @@ int main(int argc, char* args[])
 				}
 			}
 
+			// PHYSICS
+			float playerPosition = camera.position.y - PLAYER_HIGHT;
+			if (playerPosition - GRAVITY < 0)
+				playerPosition = 0;
+			else
+				playerPosition -= GRAVITY;
+			camera.position.y = playerPosition + PLAYER_HIGHT;
 
 			//MY RENDERING
 			if (rotating)
@@ -341,6 +375,9 @@ int main(int argc, char* args[])
 
 			display.render(camera, viewMatrix, lightSource, meshes,
 						   backFaceCulling, renderingType, projectionType, shadingType);
+
+			//display.drawBitmap(0, 0, textureMonkey);
+			display.drawBitmap(0, 0, textureStall);
 
 			SDL_UpdateWindowSurface(gWindow);
 

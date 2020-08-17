@@ -180,6 +180,17 @@ vec4 operator/(vec4 left, const vec4& right)
 	return left.div(right);
 }
 
+bool operator==(vec4 left, const vec4& right)
+{
+	if (left.x == right.x &&
+		left.y == right.y &&
+		left.z == right.z &&
+		left.w == right.w)
+		return true;
+	else
+		return false;
+}
+
 vec4 operator*(vec4 left, const float& multiplier)
 {
 	return left.mult(multiplier);

@@ -128,6 +128,15 @@ vec2 operator/(vec2 left, const vec2& right)
 	return left.div(right);
 }
 
+bool operator==(vec2 left, const vec2& right)
+{
+	if (left.x == right.x &&
+		left.y == right.y)
+		return true;
+	else
+		return false;
+}
+
 vec2 operator*(vec2 left, const float& multiplier)
 {
 	return left.mult(multiplier);

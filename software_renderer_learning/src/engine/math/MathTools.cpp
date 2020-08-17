@@ -8,7 +8,7 @@ float degreesToRadians(float angle)
 
 float radiansToDegrees(float angle)
 {
-	return angle * 180 / M_PI;
+	return angle * 180.0 / M_PI;
 }
 
 float getGradient2(float value, float start, float end)
