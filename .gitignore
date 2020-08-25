@@ -259,3 +259,10 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+
+.gitattributes
+.gitignore
+CppProperties.json
+software_renderer_learning.sln
+software_renderer_learning.vcxproj
+software_renderer_learning.vcxproj.filters

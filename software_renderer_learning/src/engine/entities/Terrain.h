@@ -5,8 +5,8 @@
 #include "../meshes/Mesh.h"
 #include "../meshes/Face.h"
 
-#define SIZE 128
-#define VERTEX_COUNT 64
+#define SIZE 64
+#define VERTEX_COUNT 32
 #define MESH_NAME_TERRAIN "Terrain"
 
 class Terrain

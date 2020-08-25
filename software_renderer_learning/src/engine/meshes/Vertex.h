@@ -10,14 +10,14 @@ public:
 		   vec3 coordinates, 
 		   vec3 projectedCoordinates, 
 		   vec2 screenCoordinates, 
-		   vec3 worldCoordinates);
+		   vec3 eyeCoordinates);
 	Vertex(vec3 normal, vec3 coordinates);
 	Vertex();
 	~Vertex();
 
 	vec3 normal;
 	vec3 coordinates;
-	vec3 worldCoordinates;
+	vec3 eyeCoordinates;
 	vec3 projectedCoordinates;
 	vec2 screenCoordinates;
 };

@@ -109,9 +109,15 @@
     <Image Include="res\monkey.jpg" />
     <Image Include="res\monkey.bmp" />
     <Image Include="res\stall.bmp" />
+    <Image Include="res\purple.bmp" />
+    <Image Include="res\grass.bmp" />
+    <Image Include="res\grass.png" />
+    <Image Include="res\spyro level.png" />
+    <Image Include="res\spyro level.bmp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL2.dll" />
+    <None Include="res\PlayStation - Spyro the Dragon - Dark Hollow.zip" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="res\dragon.obj" />
@@ -131,8 +137,10 @@
     <Text Include="res\teapot.obj" />
     <Text Include="res\utahteapot.obj" />
     <Text Include="res\monkey.obj" />
+    <Text Include="res\suzanne.obj" />
   </ItemGroup>
   <ItemGroup>
-    <Object Include="res\suzanne.obj" />
+    <Object Include="res\spyro level.obj" />
+    <Object Include="res\spyro level2.obj" />
   </ItemGroup>
 </Project>

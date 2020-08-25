@@ -87,6 +87,7 @@ void Display::render(Camera& camera,
 	mat4 rotationMatrix;
 	mat4 translationMatrix;
 	mat4 worldMatrix; // translation * rotation
+	mat4 toEyeSpaceMatrix; // viewMatrix * worldMatrix
 	mat4 transformMatrix;
 	Vertex v0, v1, v2;
 	vec3 faceNormal;
@@ -97,7 +98,8 @@ void Display::render(Camera& camera,
 		rotationMatrix = mat4::rotationPitchYawRoll(mesh.rotation);
 		translationMatrix = mat4::translation(mesh.position);
 		worldMatrix = translationMatrix * rotationMatrix;
-		transformMatrix = projectionMatrix * (viewMatrix * worldMatrix);
+		toEyeSpaceMatrix = viewMatrix * worldMatrix;
+		transformMatrix = projectionMatrix * toEyeSpaceMatrix;
 
 		faceIndex = 0;
 		for (Face face : mesh.faces)
@@ -106,31 +108,36 @@ void Display::render(Camera& camera,
 			v1.coordinates = mesh.vertices[face.vertexIndices.y];
 			v2.coordinates = mesh.vertices[face.vertexIndices.z];
 
-			vec4 worldCoordinates;
-			worldCoordinates = worldMatrix * vec4::homogeneous(v0.coordinates);
-			// (worldCoordinates.w is 1 always, no need to divide each coordinate by it)
-			v0.worldCoordinates = vec4::toVec3(worldCoordinates);
-			worldCoordinates = worldMatrix * vec4::homogeneous(v1.coordinates);
-			v1.worldCoordinates = vec4::toVec3(worldCoordinates);
-			worldCoordinates = worldMatrix * vec4::homogeneous(v2.coordinates);
-			v2.worldCoordinates = vec4::toVec3(worldCoordinates);
+			vec4 eyeCoordinates;
+			// (eyeCoordinates.w is 1 always, no need to divide each coordinate by it)
+			eyeCoordinates = toEyeSpaceMatrix * vec4::homogeneous(v0.coordinates);
+			v0.eyeCoordinates = vec4::toVec3(eyeCoordinates);
+			eyeCoordinates = toEyeSpaceMatrix * vec4::homogeneous(v1.coordinates);
+			v1.eyeCoordinates = vec4::toVec3(eyeCoordinates);
+			eyeCoordinates = toEyeSpaceMatrix * vec4::homogeneous(v2.coordinates);
+			v2.eyeCoordinates = vec4::toVec3(eyeCoordinates);
 
 			faceNormal = vec3::normalize(
-				vec3::cross(v1.worldCoordinates - v0.worldCoordinates,
-							v2.worldCoordinates - v0.worldCoordinates));
+				vec3::cross(v1.eyeCoordinates - v0.eyeCoordinates,
+							v2.eyeCoordinates - v0.eyeCoordinates));
 
 			if (backFaceCulling == BACK_FACE_CULLING_ENABLED_WCS &&
-				vec3::dot(vec3::normalize(camera.position - v0.worldCoordinates), faceNormal) < 0)
+				vec3::dot(vec3::normalize(vec3(0, 0, 0) - v0.eyeCoordinates), faceNormal) < 0)
 				continue;
+			/*if (backFaceCulling == BACK_FACE_CULLING_ENABLED_WCS &&
+				vec3::dot(vec3::normalize(camera.position - v0.eyeCoordinates), faceNormal) < 0)
+				continue;*/
 
 			if (project(&v0, transformMatrix) == -1 ||
 				project(&v1, transformMatrix) == -1 ||
 				project(&v2, transformMatrix) == -1)
 				continue;
 
-			v0.normal = vec4::toVec3(rotationMatrix * vec4::homogeneous(mesh.normals[face.normalIndices.x]));
-			v1.normal = vec4::toVec3(rotationMatrix * vec4::homogeneous(mesh.normals[face.normalIndices.y]));
-			v2.normal = vec4::toVec3(rotationMatrix * vec4::homogeneous(mesh.normals[face.normalIndices.z]));
+			v0.normal = vec4::toVec3(viewMatrix * (rotationMatrix * vec4::homogeneous(mesh.normals[face.normalIndices.x])));
+			v1.normal = vec4::toVec3(viewMatrix * (rotationMatrix * vec4::homogeneous(mesh.normals[face.normalIndices.y])));
+			v2.normal = vec4::toVec3(viewMatrix * (rotationMatrix * vec4::homogeneous(mesh.normals[face.normalIndices.z])));
+
+			lightSource.eyeCoordinates = vec4::toVec3(toEyeSpaceMatrix * lightSource.position);
 
 			/*if (backFaceCulling == BACK_FACE_CULLING_ENABLED_NDCS)
 				if (signedArea2dTriangle(v0.screenCoordinates,
@@ -275,42 +282,81 @@ void Display::drawLine(vec2 p0, vec2 p1, vec4 color)
 
 void Display::drawTriangle(FaceData& faceData, LightSource& lightSource)
 {
-	vec3 temp;
 	vec3& p0 = faceData.v0.projectedCoordinates;
 	vec3& p1 = faceData.v1.projectedCoordinates;
 	vec3& p2 = faceData.v2.projectedCoordinates;
+
+	// prepare for interpolation
+	float normalDotToLight0 = min(1, max(0, vec3::dot(faceData.v0.normal,
+													  vec3::normalize(lightSource.eyeCoordinates - faceData.v0.eyeCoordinates))));
+	vec2 uv0 = faceData.mesh.textures[faceData.face.textureIndices.x];
+	float normalDotToLight1 = min(1, max(0, vec3::dot(faceData.v1.normal,
+													  vec3::normalize(lightSource.eyeCoordinates - faceData.v1.eyeCoordinates))));
+	vec2 uv1 = faceData.mesh.textures[faceData.face.textureIndices.y];
+	float normalDotToLight2 = min(1, max(0, vec3::dot(faceData.v2.normal,
+													  vec3::normalize(lightSource.eyeCoordinates - faceData.v2.eyeCoordinates))));
+	vec2 uv2 = faceData.mesh.textures[faceData.face.textureIndices.z];
+
+	Vertex tempV;
+	vec3 tempP;
+	float tempNDTL;
+	vec2 tempUV;
 	if (p0.y > p1.y)
 	{
-		temp = p0;
+		/*tempP = p0;
 		p0 = p1;
-		p1 = temp;
+		p1 = tempP;*/
+
+		tempV = faceData.v0;
+		faceData.v0 = faceData.v1;
+		faceData.v1 = tempV;
+
+		tempNDTL = normalDotToLight0;
+		normalDotToLight0 = normalDotToLight1;
+		normalDotToLight1 = tempNDTL;
+
+		tempUV = uv0;
+		uv0 = uv1;
+		uv1 = tempUV;
 	}
 
 	if (p1.y > p2.y)
 	{
-		temp = p1;
+		/*tempP = p1;
 		p1 = p2;
-		p2 = temp;
+		p2 = tempP;*/
+
+		tempV = faceData.v1;
+		faceData.v1 = faceData.v2;
+		faceData.v2 = tempV;
+
+		tempNDTL = normalDotToLight1;
+		normalDotToLight1 = normalDotToLight2;
+		normalDotToLight2 = tempNDTL;
+
+		tempUV = uv1;
+		uv1 = uv2;
+		uv2 = tempUV;
 	}
 
 	if (p0.y > p1.y)
 	{
-		temp = p0;
+		/*tempP = p0;
 		p0 = p1;
-		p1 = temp;
-	}
+		p1 = tempP;*/
 
-	// prepare for interpolation
-	//////
-	float normalDotToLight0 = min(1, max(0, vec3::dot(faceData.v0.normal,
-													  vec3::normalize(lightSource.position - faceData.v0.worldCoordinates))));
-	vec2 uv0 = faceData.mesh.textures[faceData.face.textureIndices.x];
-	float normalDotToLight1 = min(1, max(0, vec3::dot(faceData.v1.normal,
-													  vec3::normalize(lightSource.position - faceData.v1.worldCoordinates))));
-	vec2 uv1 = faceData.mesh.textures[faceData.face.textureIndices.y];
-	float normalDotToLight2 = min(1, max(0, vec3::dot(faceData.v2.normal,
-													  vec3::normalize(lightSource.position - faceData.v2.worldCoordinates))));
-	vec2 uv2 = faceData.mesh.textures[faceData.face.textureIndices.z];
+		tempV = faceData.v0;
+		faceData.v0 = faceData.v1;
+		faceData.v1 = tempV;
+
+		tempNDTL = normalDotToLight0;
+		normalDotToLight0 = normalDotToLight1;
+		normalDotToLight1 = tempNDTL;
+
+		tempUV = uv0;
+		uv0 = uv1;
+		uv1 = tempUV;
+	}
 
 	/*if ((p2.x - p1.x) / (p2.y - p1.y) > (p3.x - p1.x) / (p3.y - p1.y))*/
 	if ((p0.y == p1.y && p1.x > p0.x) ||
@@ -380,34 +426,34 @@ void Display::processScanLineFlatShading(int& y, Vertex& l1, Vertex& l2, Vertex&
 										 FaceData& faceData, InterpolationData interpolationData,
 										 LightSource& lightSource)
 {
-	vec3 faceCenter = triangleCenter(faceData.v0.worldCoordinates,
-									 faceData.v1.worldCoordinates,
-									 faceData.v2.worldCoordinates);
+	/*vec3 faceCenter = triangleCenter(faceData.v0.eyeCoordinates,
+									 faceData.v1.eyeCoordinates,
+									 faceData.v2.eyeCoordinates);
 
 	vec2 n01 = inwardEdgeNormal(faceData.v0.screenCoordinates, faceData.v1.screenCoordinates);
 	vec2 n02 = inwardEdgeNormal(faceData.v0.screenCoordinates, faceData.v2.screenCoordinates);
 	vec2 n12 = inwardEdgeNormal(faceData.v1.screenCoordinates, faceData.v2.screenCoordinates);
 
 	float normalDotToLight0 = min(1, max(0, vec3::dot(faceData.v0.normal,
-													  vec3::normalize(lightSource.position - faceData.v0.worldCoordinates))));
+													  vec3::normalize(lightSource.position - faceData.v0.eyeCoordinates))));
 	vec4 color0(150 * normalDotToLight0,
 				150 * normalDotToLight0,
 				150 * normalDotToLight0,
 				255);
 
 	float normalDotToLight1 = min(1, max(0, vec3::dot(faceData.v1.normal,
-													  vec3::normalize(lightSource.position - faceData.v1.worldCoordinates))));
+													  vec3::normalize(lightSource.position - faceData.v1.eyeCoordinates))));
 	vec4 color1(150 * normalDotToLight1,
 				150 * normalDotToLight1,
 				150 * normalDotToLight1,
 				255);
 
 	float normalDotToLight2 = min(1, max(0, vec3::dot(faceData.v2.normal,
-													  vec3::normalize(lightSource.position - faceData.v2.worldCoordinates))));
+													  vec3::normalize(lightSource.position - faceData.v2.eyeCoordinates))));
 	vec4 color2(150 * normalDotToLight2,
 				150 * normalDotToLight2,
 				150 * normalDotToLight2,
-				255);
+				255);*/
 
 	//float gradient1 = l1.y == l2.y ? 1 : getGradient2(y, l1.y, l2.y);
 	//float gradient2 = r1.y == r2.y ? 1 : getGradient2(y, r1.y, r2.y);
@@ -458,63 +504,6 @@ void Display::processScanLineFlatShading(int& y, Vertex& l1, Vertex& l2, Vertex&
 	//}
 }
 
-void Display::getStartAndEndValuesForInterpolation(vec3& l1, vec3& l2, vec3& r1, vec3& r2, FaceData& faceData,
-												   float& gradient1,
-												   float& gradient2,
-												   float& normalDotToLight0,
-												   float& normalDotToLight1,
-												   float& normalDotToLight2,
-												   float& startNormalDotToLight,
-												   float& endNormalDotToLight,
-												   vec2& uv0,
-												   vec2& uv1,
-												   vec2& uv2,
-												   vec2& startUV,
-												   vec2& endUV)
-{
-	if (l1 == faceData.v0.coordinates && l2 == faceData.v1.coordinates)
-	{
-		startNormalDotToLight = 1.0 / linearInterpolation2(1.0 / normalDotToLight0, 1.0 / normalDotToLight1, gradient1);
-		startUV.x = 1.0 / linearInterpolation2(1.0 / uv0.x, 1.0 / uv1.x, gradient1); // u
-		startUV.y = 1.0 / linearInterpolation2(1.0 / uv0.y, 1.0 / uv1.y, gradient1); // v
-	}
-	else if (l1 == faceData.v0.coordinates && l2 == faceData.v2.coordinates)
-	{
-		startNormalDotToLight = 1.0 / linearInterpolation2(1.0 / normalDotToLight0, 1.0 / normalDotToLight2, gradient1);
-		startUV.x = 1.0 / linearInterpolation2(1.0 / uv0.x, 1.0 / uv2.x, gradient1); // u
-		startUV.y = 1.0 / linearInterpolation2(1.0 / uv0.y, 1.0 / uv2.y, gradient1); // v
-	}
-	else if (l1 == faceData.v1.coordinates && l2 == faceData.v2.coordinates)
-	{
-		startNormalDotToLight = 1.0 / linearInterpolation2(1.0 / normalDotToLight1, 1.0 / normalDotToLight2, gradient1);
-		startUV.x = 1.0 / linearInterpolation2(1.0 / uv1.x, 1.0 / uv2.x, gradient1); // u
-		startUV.y = 1.0 / linearInterpolation2(1.0 / uv1.y, 1.0 / uv2.y, gradient1); // v
-	}
-	else;
-	//std::cout << "ERROR!\";
-
-	if (r1 == faceData.v0.coordinates && r2 == faceData.v1.coordinates)
-	{
-		endNormalDotToLight = 1.0 / linearInterpolation2(1.0 / normalDotToLight0, 1.0 / normalDotToLight1, gradient1);
-		endUV.x = 1.0 / linearInterpolation2(1.0 / uv0.x, 1.0 / uv1.x, gradient1); // u
-		endUV.y = 1.0 / linearInterpolation2(1.0 / uv0.y, 1.0 / uv1.y, gradient1); // v
-	}
-	else if (r1 == faceData.v0.coordinates && r2 == faceData.v2.coordinates)
-	{
-		endNormalDotToLight = 1.0 / linearInterpolation2(1.0 / normalDotToLight0, 1.0 / normalDotToLight2, gradient1);
-		endUV.x = 1.0 / linearInterpolation2(1.0 / uv0.x, 1.0 / uv2.x, gradient1); // u
-		endUV.y = 1.0 / linearInterpolation2(1.0 / uv0.y, 1.0 / uv2.y, gradient1); // v
-	}
-	else if (r1 == faceData.v1.coordinates && r2 == faceData.v2.coordinates)
-	{
-		endNormalDotToLight = 1.0 / linearInterpolation2(1.0 / normalDotToLight1, 1.0 / normalDotToLight2, gradient1);
-		endUV.x = 1.0 / linearInterpolation2(1.0 / uv1.x, 1.0 / uv2.x, gradient1); // u
-		endUV.y = 1.0 / linearInterpolation2(1.0 / uv1.y, 1.0 / uv2.y, gradient1); // v
-	}
-	else;
-	//std::cout << "ERROR!\n";
-}
-
 void Display::processScanLineGouraudShading(int& y, Vertex& l1, Vertex& l2, Vertex& r1, Vertex& r2,
 											FaceData& faceData, InterpolationData interpolationData,
 											LightSource& lightSource)
@@ -546,9 +535,9 @@ void Display::processScanLineGouraudShading(int& y, Vertex& l1, Vertex& l2, Vert
 										temp.z * normalDotToLight2,
 										temp.w);*/
 
-	float gradient1 = l1.projectedCoordinates.y == l2.projectedCoordinates.y ? 1 :
+	float gradient1 = l1.projectedCoordinates.y == l2.projectedCoordinates.y ? 0 :
 		getGradient2(y, l1.projectedCoordinates.y, l2.projectedCoordinates.y);
-	float gradient2 = r1.projectedCoordinates.y == r2.projectedCoordinates.y ? 1 :
+	float gradient2 = r1.projectedCoordinates.y == r2.projectedCoordinates.y ? 0 :
 		getGradient2(y, r1.projectedCoordinates.y, r2.projectedCoordinates.y);
 
 	// intersection of y = y and l1l2 or l2.x when l1.y = l2.y
@@ -557,37 +546,48 @@ void Display::processScanLineGouraudShading(int& y, Vertex& l1, Vertex& l2, Vert
 	int endX = linearInterpolation2(r1.projectedCoordinates.x, r2.projectedCoordinates.x, gradient2);
 
 	// see my perspective-correct interpolation notes
-	float startZ = 1.0 / linearInterpolation2(1.0 / l1.worldCoordinates.z, 1.0 / l2.projectedCoordinates.z, gradient1);
-	float endZ = 1.0 / linearInterpolation2(1.0 / r1.projectedCoordinates.z, 1.0 / r2.projectedCoordinates.z, gradient2);
+	float startZeye = 1.0 / linearInterpolation2(1.0 / l1.eyeCoordinates.z, 1.0 / l2.eyeCoordinates.z, gradient1);
+	float endZeye = 1.0 / linearInterpolation2(1.0 / r1.eyeCoordinates.z, 1.0 / r2.eyeCoordinates.z, gradient2);
 
-	float startNormalDotToLight = 1.0 / linearInterpolation2(1.0 / interpolationData.l1NormalDotToLight,
-															 1.0 / interpolationData.l2NormalDotToLight,
-															 gradient1);
-	float endNormalDotToLight = 1.0 / linearInterpolation2(1.0 / interpolationData.r1NormalDotToLight,
-														   1.0 / interpolationData.r2NormalDotToLight,
-														   gradient2);
+	float startZ_NDC = linearInterpolation2(l1.projectedCoordinates.z, l2.projectedCoordinates.z, gradient1);
+	float endZ_NDC = linearInterpolation2(r1.projectedCoordinates.z, r2.projectedCoordinates.z, gradient2);
+
+	float startNormalDotToLight = startZeye * linearInterpolation2(interpolationData.l1NormalDotToLight / l1.eyeCoordinates.z,
+																   interpolationData.l2NormalDotToLight / l2.eyeCoordinates.z,
+																   gradient1);
+	float endNormalDotToLight = endZeye * linearInterpolation2(interpolationData.r1NormalDotToLight / r1.eyeCoordinates.z,
+															   interpolationData.r2NormalDotToLight / r2.eyeCoordinates.z,
+															   gradient2);
 
 	vec2 startUV, endUV;
-	startUV.x = startZ * linearInterpolation2(interpolationData.l1UV.x / l1.projectedCoordinates.z, 1.0 / interpolationData.l2UV.x, gradient1); // u
-	startUV.y = 1.0 / linearInterpolation2(1.0 / interpolationData.l1UV.y, 1.0 / interpolationData.l2UV.y, gradient1); // v
-	endUV.x = 1.0 / linearInterpolation2(1.0 / interpolationData.r1UV.x, 1.0 / interpolationData.r2UV.x, gradient2); // u
-	endUV.y = 1.0 / linearInterpolation2(1.0 / interpolationData.r1UV.y, 1.0 / interpolationData.r2UV.y, gradient2); // v
+	startUV.x = startZeye * linearInterpolation2(interpolationData.l1UV.x / l1.eyeCoordinates.z,
+												 interpolationData.l2UV.x / l2.eyeCoordinates.z,
+												 gradient1); // u
+	startUV.y = startZeye * linearInterpolation2(interpolationData.l1UV.y / l1.eyeCoordinates.z,
+												 interpolationData.l2UV.y / l2.eyeCoordinates.z,
+												 gradient1); // v
+	endUV.x = endZeye * linearInterpolation2(interpolationData.r1UV.x / r1.eyeCoordinates.z,
+											 interpolationData.r2UV.x / r2.eyeCoordinates.z,
+											 gradient2); // u
+	endUV.y = endZeye * linearInterpolation2(interpolationData.r1UV.y / r1.eyeCoordinates.z,
+											 interpolationData.r2UV.y / r2.eyeCoordinates.z,
+											 gradient2); // v
 
-	/*getStartAndEndValuesForInterpolation(l1, l2, r1, r2, faceData,
-										 gradient1,
-										 gradient2,
-										 normalDotToLight0,
-										 normalDotToLight1,
-										 normalDotToLight2,
-										 startNormalDotToLight,
-										 endNormalDotToLight,
-										 uv0,
-										 uv1,
-										 uv2,
-										 startUV,
-										 endUV);*/
+		/*getStartAndEndValuesForInterpolation(l1, l2, r1, r2, faceData,
+											 gradient1,
+											 gradient2,
+											 normalDotToLight0,
+											 normalDotToLight1,
+											 normalDotToLight2,
+											 startNormalDotToLight,
+											 endNormalDotToLight,
+											 uv0,
+											 uv1,
+											 uv2,
+											 startUV,
+											 endUV);*/
 
-	float gradient, z;
+	float gradient, zNDC, zEye;
 	float normalDotToLight;
 	int pixelIndex;
 	/*vec2 point;*/
@@ -610,13 +610,14 @@ void Display::processScanLineGouraudShading(int& y, Vertex& l1, Vertex& l2, Vert
 		//	continue;
 
 		gradient = startX == endX ? 0 : getGradient2(x, startX, endX);
-		z = 1.0 / linearInterpolation2(1.0 / startZ, 1.0 / endZ, gradient);
+		zEye = 1.0 / linearInterpolation2(1.0 / startZeye, 1.0 / endZeye, gradient);
+		zNDC = linearInterpolation2(startZ_NDC, endZ_NDC, gradient);
 
 		pixelIndex = y * width + x;
 
-		if (z < depthBuffer[pixelIndex])
+		if (zNDC < depthBuffer[pixelIndex])
 		{
-			depthBuffer[pixelIndex] = z;
+			depthBuffer[pixelIndex] = zNDC;
 
 			/*float normalDotToLight = a * normalDotToLight0 +
 				b * normalDotToLight1 +
@@ -625,29 +626,41 @@ void Display::processScanLineGouraudShading(int& y, Vertex& l1, Vertex& l2, Vert
 			float u = (a * uv0.x + b * uv1.x + g * uv2.x) * (float)faceData.mesh.texture->width;
 			float v = (a * uv0.y + b * uv1.y + g * uv2.y) * (float)faceData.mesh.texture->height;*/
 
-			normalDotToLight = 1.0 / linearInterpolation2(1.0 / startNormalDotToLight,
-														  1.0 / endNormalDotToLight,
-														  gradient);
+			normalDotToLight = zEye * linearInterpolation2(startNormalDotToLight / startZeye,
+														   endNormalDotToLight / endZeye,
+														   gradient);
 			if (texture != NULL)
 			{
-				u = z * linearInterpolation2(startUV.x / startZ,
-											 endUV.x / endZ,
-											 gradient) * texture->width;
-				v = z * linearInterpolation2(startUV.y / startZ,
-											 endUV.y / endZ,
-											 gradient) * texture->height;
+				u = zEye * linearInterpolation2(startUV.x / startZeye,
+												endUV.x / endZeye,
+												gradient);
+				v = zEye * linearInterpolation2(startUV.y / startZeye,
+												endUV.y / endZeye,
+												gradient);
 
-				colorTexture = texture->getPixel(vec2(u, v));
+				/*if (u < 0 || u >= 256 || v < 0 || v >= 256)
+					printf("");*/
+
+				if (u > 0.25 || v > 0.25)
+					printf("");
+
+				/*if (x == 1013 && y == 101)
+					printf("");*/
+
+				colorTexture = texture->getPixel(vec2(u * texture->width, v * texture->height));
+
+				if (colorTexture.x <= 0.1)
+					printf("");
 				/*printf("%3.2f, %3.2f\n", u, v);*/
 			}
 			else
-			{
 				colorTexture = vec4(1, 1, 1, 1);
-			}
 
 			//drawPoint(vec2(x, y), color * normalDotToLight);
-			//drawPoint(vec2(x, y), color * normalDotToLight * colorTexture);
+			//drawPoint(vec2(x, y), colorTexture * normalDotToLight);
+
 			drawPoint(vec2(x, y), colorTexture);
+			//drawPoint(vec2(x, y), color * depthBuffer[pixelIndex]);
 		}
 	}
 

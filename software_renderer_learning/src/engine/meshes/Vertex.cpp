@@ -4,12 +4,12 @@ Vertex::Vertex(vec3 normal,
 			   vec3 coordinates,
 			   vec3 projectedCoordinates, 
 			   vec2 screenCoordinates, 
-			   vec3 worldCoordinates) :
+			   vec3 eyeCoordinates) :
 	normal(normal), 
 	coordinates(coordinates),
 	projectedCoordinates(projectedCoordinates),
 	screenCoordinates(screenCoordinates),
-	worldCoordinates(worldCoordinates)
+	eyeCoordinates(eyeCoordinates)
 {
 }
 

@@ -4,10 +4,11 @@
 
 struct LightSource
 {
-	vec3 position;
+	vec4 position;
+	vec3 eyeCoordinates;
 	vec4 color;
 	float brightness; 
 
-	LightSource(vec3 position, vec4 color, float brightness);
+	LightSource(vec4 position, vec4 color, float brightness);
 };
 

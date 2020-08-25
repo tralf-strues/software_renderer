@@ -137,20 +137,6 @@ private:
 									FaceData& faceData, InterpolationData interpolationData,
 									LightSource& lightSource);
 
-	void getStartAndEndValuesForInterpolation(vec3& l1, vec3& l2, vec3& r1, vec3& r2, FaceData& faceData,
-											  float& gradient1,
-											  float& gradient2,
-											  float& normalDotToLight0,
-											  float& normalDotToLight1,
-											  float& normalDotToLight2,
-											  float& startNormalDotToLight,
-											  float& endNormalDotToLight,
-											  vec2& uv0,
-											  vec2& uv1,
-											  vec2& uv2,
-											  vec2& startUV,
-											  vec2& endUV);
-
 	void processScanLineGouraudShading(int& y, Vertex& l1, Vertex& l2, Vertex& r1, Vertex& r2,
 									   FaceData& faceData, InterpolationData interpolationData,
 									   LightSource& lightSource);

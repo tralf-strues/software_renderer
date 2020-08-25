@@ -16,7 +16,7 @@
 #define MOUSE_SENSITIVITY 0.001f
 
 #define PLAYER_HIGHT 10.0f
-#define GRAVITY 0.01f
+#define GRAVITY 0
 
 bool init();
 void close();
@@ -105,7 +105,10 @@ int main(int argc, char* args[])
 
 		// Objects:
 		Texture textureMonkey = loadTexture("monkey", "monkey.bmp");
+		Texture texturePurple = loadTexture("purple", "purple.bmp");
 		Texture textureStall = loadTexture("stall", "stall.bmp");
+		Texture textureGrass = loadTexture("grass", "grass.bmp");
+		Texture textureSpyroLevel = loadTexture("spyro level", "spyro level.bmp");
 
 		printf("%d - Vector comparison\n", vec3(0, 0, 1) == vec3(0, 0, 1));
 
@@ -136,34 +139,41 @@ int main(int argc, char* args[])
 
 		Terrain terrain(0, 0);
 		terrain.mesh.position = vec3(-25, 0, -25);
-		std::cout << terrain.mesh.faces.size() << std::endl;
-		std::cout << terrain.mesh.vertices.size() << std::endl;
+		terrain.mesh.texture = &textureGrass;
+		/*std::cout << terrain.mesh.faces.size() << std::endl;
+		std::cout << terrain.mesh.vertices.size() << std::endl;*/
 
 		Mesh test("test", 3, 1);
 		test.vertices = std::vector<vec3>{ vec3(0, 0, 0), vec3(5, 0, 0), vec3(5, 5, 0) };
 		test.textures = std::vector<vec2>{ vec2(0, 0), vec2(0.25, 0), vec2(0.25, 0.25) };
 		test.texture = &textureStall;
+		//test.texture = &texturePurple;
 		test.normals = std::vector<vec3>{ vec3(0, 0, -1), vec3(0, 0, -1), vec3(0, 0, -1) };
 		Face testFace;
 		testFace.vertexIndices = vec3(0, 1, 2);
 		testFace.textureIndices = vec3(0, 1, 2);
 		testFace.normalIndices = vec3(0, 1, 2);
 		test.faces = std::vector<Face>{ testFace };
-		test.position = vec3(10, 2, 10);
+		test.position = vec3(-5, 2, -5);
 		test.rotation = vec3(0, degreesToRadians(-180), 0);
+		test.setScale(4);
 
+		Mesh spyroLevel = loadOBJ("Spyro level", "spyro level2");
+		spyroLevel.position = vec3(0, 0, 0);
+		spyroLevel.setScale(0.75);
+		spyroLevel.texture = &textureSpyroLevel;
+
+		meshes.push_back(spyroLevel);
 		//meshes.push_back(test);
-
 		//meshes.push_back(pine);
 		//meshes.push_back(box);
-		meshes.push_back(person);
-		meshes.push_back(stall);
+		//meshes.push_back(person);
+		//meshes.push_back(stall);
 		/*meshes.push_back(bunny);
 		meshes.push_back(dragon);*/
 		//meshes.push_back(teapot);
-		/*meshes.push_back(monkey);*/
-		meshes.push_back(terrain.mesh);
-
+		//meshes.push_back(monkey);
+		//meshes.push_back(terrain.mesh);
 
 		int totalNumberOfFaces = 0;
 		int totalNumberOfVertices = 0;
@@ -194,7 +204,11 @@ int main(int argc, char* args[])
 		bool lightFollowingCamera = true;
 
 		//Light Sources:
-		LightSource lightSource(camera.position, vec4(255, 255, 255, 255), 1);
+		vec4 lightSourcePosition = vec4(camera.position.x,
+										camera.position.y,
+										camera.position.z,
+										1);
+		LightSource lightSource(lightSourcePosition, vec4(255, 255, 255, 255), 1);
 
 		//Rendering specification
 		BackFaceCulling backFaceCulling = BACK_FACE_CULLING_ENABLED_WCS;
@@ -369,15 +383,18 @@ int main(int argc, char* args[])
 			}
 
 			if (lightFollowingCamera)
-				lightSource.position = camera.position;
+				lightSource.position = vec4(camera.position.x,
+											camera.position.y,
+											camera.position.z,
+											1);
 			else
-				lightSource.position = vec3(0, 10, 70);
+				lightSource.position = vec4(-45, 5, -45, 1);
 
 			display.render(camera, viewMatrix, lightSource, meshes,
 						   backFaceCulling, renderingType, projectionType, shadingType);
 
 			//display.drawBitmap(0, 0, textureMonkey);
-			display.drawBitmap(0, 0, textureStall);
+			/*display.drawBitmap(0, 0, textureStall);*/
 
 			SDL_UpdateWindowSurface(gWindow);
 
